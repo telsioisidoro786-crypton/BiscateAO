@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Offline - BiscateAO</title>
+  <meta name="theme-color" content="#9B1D2D">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+      color: #fff;
+      padding: 20px;
+    }
+    .container {
+      max-width: 400px;
+      text-align: center;
+    }
+    .icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 24px;
+      background: linear-gradient(135deg, #9B1D2D 0%, #7a1721 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 32px rgba(155, 29, 45, 0.4);
+    }
+    .icon svg { width: 40px; height: 40px; color: #fff; }
+    h1 { font-size: 24px; font-weight: 700; margin-bottom: 12px; }
+    p { color: rgba(255,255,255,0.7); line-height: 1.6; margin-bottom: 24px; }
+    .features {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin: 24px 0;
+      text-align: left;
+    }
+    .feature {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .feature-icon { font-size: 20px; }
+    .feature-title { font-weight: 600; font-size: 14px; }
+    .feature-desc { font-size: 12px; color: rgba(255,255,255,0.6); }
+    button {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #9B1D2D 0%, #7a1721 100%);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    button:active { transform: scale(0.98); }
+    button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+    .retry-hint { margin-top: 16px; font-size: 13px; color: rgba(255,255,255,0.5); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M1 4.5v15a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V4.5"/>
+        <path d="M16 10H8"/>
+        <path d="M12 18V10"/>
+      </svg>
+    </div>
+    <h1>Você está offline</h1>
+    <p>Sem conexão no momento. Algumas funcionalidades do BiscateAO podem não estar disponíveis.</p>
+
+    <div class="features">
+      <div class="feature">
+        <span class="feature-icon">📋</span>
+        <span class="feature-title">Pedidos salvos</span>
+        <span class="feature-desc">Seus rascunhos ficam guardados</span>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">💬</span>
+        <span class="feature-title">Mensagens</span>
+        <span class="feature-desc">Enviadas quando voltar online</span>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">⭐</span>
+        <span class="feature-title">Favoritos</span>
+        <span class="feature-desc">Profissionais guardados offline</span>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">🔄</span>
+        <span class="feature-title">Sincronização</span>
+        <span class="feature-desc">Automática ao reconectar</span>
+      </div>
+    </div>
+
+    <button id="retry-btn" onclick="retryConnection()">
+      Tentar reconectar
+    </button>
+    <p class="retry-hint">A página recarregará automaticamente quando a conexão voltar</p>
+  </div>
+
+  <script>
+    const btn = document.getElementById('retry-btn');
+
+    function retryConnection() {
+      btn.textContent = 'Verificando...';
+      btn.disabled = true;
+      fetch('/', { method: 'HEAD', cache: 'no-cache' })
+        .then(() => window.location.reload())
+        .catch(() => {
+          btn.textContent = 'Tentar reconectar';
+          btn.disabled = false;
+        });
+    }
+
+    // Auto-retry a cada 10s
+    setInterval(retryConnection, 10000);
+
+    // Listen for online event
+    window.addEventListener('online', () => window.location.reload());
+
+    // Register SW for offline support
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(console.error);
+    }
+  </script>
+</body>
+</html>
