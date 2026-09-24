@@ -13,6 +13,11 @@ const env = (key: string): string | undefined => {
 
 const databaseUrl = env("DATABASE_URL");
 
+/** Kept server-side so session verification can fail closed when auth is off. */
+export const authConfigured = process.env.VITE_AUTH_ENABLED !== "false";
+/** Cookie name shared with the preview popup handler. */
+export const SESSION_TOKEN_COOKIE = "__Host-session_token";
+
 const database = env("DATABASE_URL")
   ? new Pool({ connectionString: databaseUrl })
   : { dialect: pgliteDialect(() => getPglite()), type: "postgres" as const };
