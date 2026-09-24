@@ -1,5 +1,0 @@
-{
-  "VITE_AUTH_ENABLED": "true",
-  "VITE_VAPID_PUBLIC_KEY": "BOVUWGXzxE5UrdMb_umHbVrQzqiBFWVQFxhxjrKXjnVKG22t-f7ugtSUA07uIczrfzKpjOHSEP-DgaDMKMeUaZk",
-  "deploy": { "database": true }
-}
