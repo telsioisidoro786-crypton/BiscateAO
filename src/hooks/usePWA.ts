@@ -106,11 +106,12 @@ export function usePWA() {
       setPushSubscription(subscription);
 
       // Enviar subscription para o servidor
-      await fetch('/api/push/subscribe', {
+      const response = await fetch('/api/push/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(subscription),
       });
+      if (!response.ok) throw new Error('Não foi possível guardar a subscrição push.');
 
       return subscription;
     } catch (error) {
@@ -125,11 +126,12 @@ export function usePWA() {
 
     try {
       await pushSubscription.unsubscribe();
-      await fetch('/api/push/unsubscribe', {
+      const response = await fetch('/api/push/unsubscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ endpoint: pushSubscription.endpoint }),
       });
+      if (!response.ok) throw new Error('Não foi possível remover a subscrição push.');
       setPushSubscription(null);
     } catch (error) {
       console.error('[PWA] Push unsubscribe failed:', error);
