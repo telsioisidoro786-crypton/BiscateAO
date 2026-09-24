@@ -7,13 +7,13 @@
       "status": 200,
       "title": "BiscateAO",
       "hasCanvas": false,
-      "bodyTextLen": 1287,
-      "bodyTextHash": "9572a17ec8a2aa6e64329b531f7e22443dcdb419271925e8c9401a847936d050",
+      "bodyTextLen": 1118,
+      "bodyTextHash": "135cfb8c1d30e12928afdc71003ee8d819f905490874621ca8d2af997a039a4b",
       "bodyTextPrefix": "BiscateAO Início Ofícios Pedir Pedidos Guardados Viana LUANDA · ",
       "horizontalOverflow": false,
       "consoleErrors": [],
       "pageErrors": [],
-      "screenshot": "C:\\Users\\Administrador\\Documents\\biscateAO\\screenshots\\app-builder-preview.png"
+      "screenshot": "C:\\Users\\Administrador\\Documents\\biscateAO\\screenshots\\home-audit.png"
     },
     "mobile": {
       "width": 390,
@@ -21,18 +21,18 @@
       "status": 200,
       "title": "BiscateAO",
       "hasCanvas": false,
-      "bodyTextLen": 1287,
-      "bodyTextHash": "0c0253416c21daef67bced4eac3f715de32ffcf647269d3ce8e055238188c7e2",
+      "bodyTextLen": 1118,
+      "bodyTextHash": "32253359ad6bd36d3f76805ac88a6b0a6142c06eb05729ed8244e1c55aa817d8",
       "bodyTextPrefix": "BiscateAO Viana LUANDA · OFÍCIOS DO BAIRRO O biscate que precisa",
       "horizontalOverflow": false,
       "consoleErrors": [],
       "pageErrors": [],
-      "screenshot": "C:\\Users\\Administrador\\Documents\\biscateAO\\screenshots\\app-builder-preview-mobile.png"
+      "screenshot": "C:\\Users\\Administrador\\Documents\\biscateAO\\screenshots\\home-audit-mobile.png"
     }
   },
   "brandWarnings": [
     "BRAND NOTE: no custom public/og.jpg — the platform will serve the og.grok.me placeholder. Custom cards are the default for games of every kind (DOM board/word games included), whimsical apps, creative tools, and brand-forward pages — only plain utilities (converters, CRUD trackers, admin dashboards) keep the placeholder. If this app is not a plain utility, finish the brand-asset pass per \\workspace\\.grok\\skills\\og\\SKILL.md."
   ],
   "authWarnings": [],
-  "verdictFile": "C:\\Users\\Administrador\\Documents\\biscateAO\\screenshots\\app-builder-preview.json"
+  "verdictFile": "C:\\Users\\Administrador\\Documents\\biscateAO\\screenshots\\home-audit.json"
 }

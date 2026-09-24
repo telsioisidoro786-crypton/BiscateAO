@@ -7,8 +7,9 @@
  * `VITE_AUTH_ENABLED` — a divergence that only shows up as a built-output
  * mismatch long after the fact. Anything that starts Vite directly bypasses it.
  *
- * Only `VITE_`-prefixed keys are honored: the file is a build flag carrier, not
- * a secret store, and only `VITE_` vars reach the browser anyway. A real
+ * Browser code can read only `VITE_` vars; server-only values are still passed
+ * to the Node process so integrations such as authentication can initialize.
+ * A real
  * `process.env` entry always wins, so an explicit override still works.
  *
  * That precedence also means the file governs this workspace only. A deployed
@@ -30,9 +31,7 @@ export const APP_ENV_REL_PATH = ".grok/app-env.json";
 const VITE_PREFIX = "VITE_";
 
 /**
- * Parse an app-env document, keeping only `VITE_`-prefixed string entries.
- * Anything unparseable is an empty environment — a workspace without the file
- * must behave exactly like today (auth on, no overrides).
+ * Parse an app-env document, keeping string entries for the server process.
  */
 export function parseAppEnv(text) {
   let parsed;
@@ -44,7 +43,9 @@ export function parseAppEnv(text) {
   if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) return {};
   const env = {};
   for (const [key, value] of Object.entries(parsed)) {
-    if (!key.startsWith(VITE_PREFIX)) continue;
+    // Local previews use PGLite. A deployed DATABASE_URL is supplied by the
+    // host process and wins in mergeAppEnv(), so it remains available there.
+    if (key === "DATABASE_URL") continue;
     if (typeof value !== "string") continue;
     env[key] = value;
   }
@@ -111,7 +112,13 @@ function main(argv) {
     process.exit(2);
   }
   const env = mergeAppEnv(readAppEnv(projectRoot()), process.env);
-  const child = spawn(command, args, { stdio: "inherit", env });
+  // Run Vite through its JS entry point. This avoids Windows' `.cmd` wrapper
+  // while retaining the exact same npm-script environment on every platform.
+  const executable = command === "vite" ? process.execPath : command;
+  const childArgs = command === "vite"
+    ? [join(projectRoot(), "node_modules", "vite", "bin", "vite.js"), ...args]
+    : args;
+  const child = spawn(executable, childArgs, { stdio: "inherit", env });
   // The dev server is long-running and is stopped by signalling this wrapper.
   for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"]) {
     process.on(signal, () => child.kill(signal));

@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { Link } from "@tanstack/react-router";
 
 export function JobForm({
   defaultCategory,
@@ -22,7 +24,7 @@ export function JobForm({
   workerName?: string;
 }) {
   const navigate = useNavigate();
-  const rememberJob = useBiscate((s) => s.rememberJob);
+  const { user, isPending } = useCurrentUserState();
   const storeHood = useBiscate((s) => s.neighborhood);
   const [category, setCategory] = useState(defaultCategory ?? "canalizador");
   const [neighborhood, setNeighborhood] = useState(
@@ -52,18 +54,31 @@ export function JobForm({
           preferredWorkerId,
         },
       });
-      if (!result.job) throw new Error("Pedido não gravado.");
-      rememberJob(result.job.id);
+      if (!result.id) throw new Error("Pedido não gravado.");
       toast.success("Pedido no ar. Já tens orçamentos.");
       await navigate({
         to: "/pedidos/$id",
-        params: { id: result.job.id },
+        params: { id: result.id },
       });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Não deu para publicar.");
     } finally {
       setBusy(false);
     }
+  }
+
+  if (isPending) {
+    return <div className="h-32 animate-pulse rounded-xl bg-sunken" aria-label="A verificar sessão" />;
+  }
+
+  if (!user) {
+    return (
+      <div className="space-y-4 rounded-xl bg-surface p-5 shadow-[var(--shadow-card)]">
+        <h2 className="font-display text-lg font-semibold">Entra para pedir um ofício</h2>
+        <p className="text-sm text-muted">A conta protege o teu pedido e permite acompanhar as propostas.</p>
+        <Button asChild className="w-full" size="lg"><Link to="/login">Entrar ou criar conta</Link></Button>
+      </div>
+    );
   }
 
   return (

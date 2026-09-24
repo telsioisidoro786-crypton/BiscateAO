@@ -16,8 +16,10 @@ export function PushSettings({ vapidPublicKey, onSubscribed, onUnsubscribed }: P
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
 
   const isSubscribed = !!pushSubscription;
+  const pushAvailable = Boolean(vapidPublicKey.trim());
 
   const handleSubscribe = async () => {
+    if (!pushAvailable) return;
     if (notificationPermission === 'denied') {
       setShowPermissionDialog(true);
       return;
@@ -98,7 +100,7 @@ export function PushSettings({ vapidPublicKey, onSubscribed, onUnsubscribed }: P
           variant={isSubscribed ? "outline" : "default"}
           size="sm"
           onClick={isSubscribed ? handleUnsubscribe : handleSubscribe}
-          disabled={isLoading}
+          disabled={isLoading || (!isSubscribed && !pushAvailable)}
           className="gap-1.5"
         >
           {isLoading ? (
@@ -116,6 +118,12 @@ export function PushSettings({ vapidPublicKey, onSubscribed, onUnsubscribed }: P
           )}
         </Button>
       </div>
+
+      {!pushAvailable ? (
+        <p className="mt-4 rounded-lg bg-sunken px-3 py-2 text-sm text-muted">
+          As notificações push ainda não estão disponíveis nesta versão. As tuas preferências continuam guardadas no dispositivo.
+        </p>
+      ) : null}
 
       {isSubscribed && (
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -164,6 +172,7 @@ function NotificationToggle({ title, description, enabled }: { title: string; de
 export function PushSettingsPage({ vapidPublicKey }: { vapidPublicKey: string }) {
   const { pushSubscription, notificationPermission, subscribeToPush, unsubscribeFromPush, requestNotificationPermission } = usePWA();
   const [isLoading, setIsLoading] = useState(false);
+  const pushAvailable = Boolean(vapidPublicKey.trim());
 
   return (
     <div className="space-y-6">

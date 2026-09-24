@@ -1,28 +1,35 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Bell, BellOff, User, Shield, Palette, LogOut, Loader2 } from "lucide-react";
+import { Bell, User, Shield, Palette, LogOut, Loader2, Info, LockKeyhole, Database } from "lucide-react";
 import { useState } from "react";
 import { usePWA } from "@/hooks/usePWA";
 import { PushSettingsPage } from "@/components/push-settings";
-import { useCurrentUser } from "@/lib/auth/use-current-user";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useBiscate } from "@/lib/store";
+import { getAccountProfile, updateAccountProfile } from "@/lib/account-workflows";
+import { toast } from "sonner";
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
 
 export const Route = createFileRoute("/configuracoes")({
+  loader: () => getAccountProfile(),
   component: Configuracoes,
 });
 
 function Configuracoes() {
-  const { user, isPending } = useCurrentUser();
+  const profile = Route.useLoaderData();
+  const { user, isPending } = useCurrentUserState();
   const { pushSubscription, notificationPermission } = usePWA();
   const neighborhood = useBiscate((s) => s.neighborhood);
   const setNeighborhood = useBiscate((s) => s.setNeighborhood);
   const [activeTab, setActiveTab] = useState<'conta' | 'notificacoes' | 'app' | 'sobre'>('conta');
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [accountName, setAccountName] = useState(profile?.name ?? "");
+  const [photoUrl, setPhotoUrl] = useState(profile?.image ?? "");
+  const [savingProfile, setSavingProfile] = useState(false);
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
@@ -32,6 +39,18 @@ function Configuracoes() {
       // handled by signOut
     } finally {
       setIsSigningOut(false);
+    }
+  };
+
+  const saveProfile = async () => {
+    setSavingProfile(true);
+    try {
+      await updateAccountProfile({ data: { name: accountName, image: photoUrl.trim() || null, neighborhood } });
+      toast.success("Dados da conta guardados.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível guardar os dados.");
+    } finally {
+      setSavingProfile(false);
     }
   };
 
@@ -61,7 +80,7 @@ function Configuracoes() {
     );
   }
 
-  const userName = user.name || user.email || 'Usuário';
+  const userName = user.displayName || user.primaryEmail || 'Usuário';
   const userInitials = userName
     .split(' ')
     .map(n => n[0])
@@ -79,7 +98,7 @@ function Configuracoes() {
       </header>
 
       {/* Abas */}
-      <div className="flex gap-1 bg-sunken rounded-xl p-1" role="tablist">
+      <div className="grid grid-cols-2 gap-1 rounded-xl bg-sunken p-1 sm:grid-cols-4" role="tablist">
         {[
           { id: 'conta', label: 'Conta', icon: User },
           { id: 'notificacoes', label: 'Notificações', icon: Bell, badge: pushSubscription ? 'Ativo' : null },
@@ -92,7 +111,7 @@ function Configuracoes() {
             aria-selected={activeTab === tab.id}
             onClick={() => setActiveTab(tab.id as typeof activeTab)}
             className={cn(
-              "flex-1 flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              "flex min-h-11 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
               activeTab === tab.id
                 ? "bg-bg text-ink shadow-[var(--shadow-card)]"
                 : "text-muted hover:text-ink",
@@ -122,8 +141,20 @@ function Configuracoes() {
                 </div>
                 <div className="flex-1">
                   <p className="font-display text-lg font-semibold">{userName}</p>
-                  <p className="text-sm text-muted">{user.email}</p>
+                  <p className="text-sm text-muted">{user.primaryEmail}</p>
                 </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-border bg-surface p-5">
+              <h3 className="mb-4 font-medium">Dados do perfil</h3>
+              <div className="space-y-3">
+                <label className="block text-sm font-medium">Nome
+                  <input value={accountName} onChange={(e) => setAccountName(e.target.value)} className="mt-1 h-11 w-full rounded-lg border border-border bg-bg px-3 text-sm" />
+                </label>
+                <label className="block text-sm font-medium">Foto (ligação opcional)
+                  <input type="url" value={photoUrl} onChange={(e) => setPhotoUrl(e.target.value)} placeholder="https://…" className="mt-1 h-11 w-full rounded-lg border border-border bg-bg px-3 text-sm" />
+                </label>
               </div>
             </div>
 
@@ -142,19 +173,18 @@ function Configuracoes() {
                   <option key={n} value={n}>{n}</option>
                 ))}
               </select>
+              <Button className="mt-4 w-full" onClick={saveProfile} disabled={savingProfile}>
+                {savingProfile ? "A guardar…" : "Guardar dados da conta"}
+              </Button>
             </div>
 
             <div className="rounded-xl border border-border bg-surface p-5">
               <h3 className="font-medium mb-4">Segurança</h3>
               <div className="space-y-3">
-                <Button variant="outline" className="w-full justify-start gap-3" onClick={() => alert('Em breve: alterar senha')}>
-                  <Shield className="size-4" strokeWidth={2} />
-                  <span>Alterar senha</span>
-                </Button>
-                <Button variant="outline" className="w-full justify-start gap-3" onClick={() => alert('Em breve: autenticação 2FA')}>
-                  <Shield className="size-4" strokeWidth={2} />
-                  <span>Autenticação de dois fatores</span>
-                </Button>
+                <div className="flex items-start gap-3 rounded-lg bg-sunken p-3 text-sm text-muted">
+                  <LockKeyhole className="mt-0.5 size-4 shrink-0 text-primary" />
+                  <p>A palavra-passe é gerida pela tua conta de acesso. A alteração de senha e o segundo fator estarão disponíveis numa próxima atualização.</p>
+                </div>
               </div>
             </div>
           </section>
@@ -205,14 +235,10 @@ function Configuracoes() {
             <div className="rounded-xl border border-border bg-surface p-5">
               <h3 className="font-medium mb-4">Dados e armazenamento</h3>
               <div className="space-y-3">
-                <Button variant="outline" className="w-full justify-start gap-3" onClick={() => alert('Em breve: limpar cache')}>
-                  <span className="size-4">🗑️</span>
-                  <span>Limpar cache offline</span>
-                </Button>
-                <Button variant="outline" className="w-full justify-start gap-3" onClick={() => alert('Em breve: exportar dados')}>
-                  <span className="size-4">📤</span>
-                  <span>Exportar meus dados</span>
-                </Button>
+                <div className="flex items-start gap-3 rounded-lg bg-sunken p-3 text-sm text-muted">
+                  <Database className="mt-0.5 size-4 shrink-0 text-primary" />
+                  <p>Os teus pedidos, conversas e profissionais guardados ficam disponíveis neste dispositivo enquanto a sessão estiver ativa.</p>
+                </div>
               </div>
             </div>
           </section>
@@ -235,14 +261,14 @@ function Configuracoes() {
                 to="/termos"
                 className="flex items-center gap-3 rounded-lg p-3 border border-border bg-bg hover:bg-surface transition-colors"
               >
-                <span className="size-5">📄</span>
+                <Info className="size-5 text-primary" />
                 <span className="font-medium">Termos de Uso</span>
               </Link>
               <Link
                 to="/privacidade"
                 className="flex items-center gap-3 rounded-lg p-3 border border-border bg-bg hover:bg-surface transition-colors"
               >
-                <span className="size-5">🔒</span>
+                <Shield className="size-5 text-primary" />
                 <span className="font-medium">Política de Privacidade</span>
               </Link>
               <Link

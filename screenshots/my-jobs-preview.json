@@ -1,0 +1,42 @@
+{
+  "url": "http://127.0.0.1:8080/pedidos",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 500,
+      "title": "BiscateAO",
+      "hasCanvas": false,
+      "bodyTextLen": 79,
+      "bodyTextHash": "9436fa19bfa55fedf33e93718abc5bca1a126a235d80c2be7b20dbe671a02d31",
+      "bodyTextPrefix": "BiscateAO Início Ofícios Pedir Pedidos Guardados Viana Algo falh",
+      "horizontalOverflow": false,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 ()"
+      ],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\Administrador\\Documents\\biscateAO\\screenshots\\my-jobs-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 500,
+      "title": "BiscateAO",
+      "hasCanvas": false,
+      "bodyTextLen": 79,
+      "bodyTextHash": "8ddfbdd7229890312fd479c366314a9296052be8b5a08c75d2fe4ec8e46b9858",
+      "bodyTextPrefix": "BiscateAO Viana Algo falhou Unauthorized Início Ofícios Pedir Pe",
+      "horizontalOverflow": false,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 ()"
+      ],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\Administrador\\Documents\\biscateAO\\screenshots\\my-jobs-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [
+    "BRAND NOTE: no custom public/og.jpg — the platform will serve the og.grok.me placeholder. Custom cards are the default for games of every kind (DOM board/word games included), whimsical apps, creative tools, and brand-forward pages — only plain utilities (converters, CRUD trackers, admin dashboards) keep the placeholder. If this app is not a plain utility, finish the brand-asset pass per \\workspace\\.grok\\skills\\og\\SKILL.md."
+  ],
+  "authWarnings": [],
+  "verdictFile": "C:\\Users\\Administrador\\Documents\\biscateAO\\screenshots\\my-jobs-preview.json"
+}

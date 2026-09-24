@@ -1,4 +1,4 @@
-import { createRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { auth } from "@/lib/auth/server";
 
 /**
@@ -11,12 +11,11 @@ import { auth } from "@/lib/auth/server";
  * TanStack Start's `createRoute` with a server handler gives us the `Request`
  * and returns a `Response` — exactly what Better Auth's `handler` expects.
  */
-export const Route = createRoute({
-  path: "/api/auth/$",
-  method: ["GET", "POST"],
-  handler: async ({ request }) => {
-    // Forward the request to Better Auth's built-in handler
-    // It reads cookies, validates CSRF, manages sessions, etc.
-    return auth.handler(request);
+export const Route = createFileRoute("/api/auth/$")({
+  server: {
+    handlers: {
+      GET: ({ request }) => auth.handler(request),
+      POST: ({ request }) => auth.handler(request),
+    },
   },
 });

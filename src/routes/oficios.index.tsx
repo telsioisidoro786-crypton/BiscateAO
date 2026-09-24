@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CATEGORIES } from "@/lib/catalog";
-import { getCategoriesWithCounts } from "@/lib/professionals";
+import { loadCategoriesWithCounts } from "@/lib/professionals";
 
 export const Route = createFileRoute("/oficios/")({
   loader: async () => {
-    const categoriesWithCounts = await getCategoriesWithCounts();
+    const categoriesWithCounts = await loadCategoriesWithCounts();
     return { categoriesWithCounts };
   },
   component: Oficios,

@@ -2,9 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Bookmark, BookmarkCheck, Clock, MapPin, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { getCategory } from "@/lib/catalog";
-import { getProfessional } from "@/lib/professionals";
+import { loadProfessional } from "@/lib/professionals";
 import { formatRate } from "@/lib/utils";
-import { useBiscate } from "@/lib/store";
+import { toggleSavedProfessional } from "@/lib/account-workflows";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Stars } from "@/components/stars";
@@ -19,7 +21,7 @@ import {
 
 export const Route = createFileRoute("/profissionais/$id")({
   loader: async ({ params }) => {
-    const professional = await getProfessional(params.id);
+    const professional = await loadProfessional({ data: { id: params.id } });
     return { professional };
   },
   component: Perfil,
@@ -27,8 +29,8 @@ export const Route = createFileRoute("/profissionais/$id")({
 
 function Perfil() {
   const { professional } = Route.useLoaderData();
-  const saved = useBiscate((s) => s.savedIds.includes(professional?.id ?? ""));
-  const toggleSaved = useBiscate((s) => s.toggleSaved);
+  const { user } = useCurrentUserState();
+  const [saved, setSaved] = useState(false);
   const [open, setOpen] = useState(false);
 
   if (!professional) {
@@ -59,7 +61,14 @@ function Perfil() {
             <button
               type="button"
               aria-label={saved ? "Tirar dos guardados" : "Guardar"}
-              onClick={() => toggleSaved(professional.id)}
+              onClick={async () => {
+                if (!user) { toast.error("Entra na tua conta para guardar profissionais."); return; }
+                try {
+                  const result = await toggleSavedProfessional({ data: { professionalId: professional.id } });
+                  setSaved(result.saved);
+                  toast.success(result.saved ? "Profissional guardado." : "Profissional removido dos guardados.");
+                } catch (error) { toast.error(error instanceof Error ? error.message : "Não foi possível guardar."); }
+              }}
               className="flex size-11 items-center justify-center rounded-full bg-sunken"
             >
               {saved ? (

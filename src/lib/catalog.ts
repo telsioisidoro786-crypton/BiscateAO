@@ -228,19 +228,12 @@ export function getCategory(slug: string) {
   return CATEGORIES.find((c) => c.slug === slug);
 }
 
-export async function getWorker(id: string): Promise<Worker | undefined> {
-  // Server-side: try database first
-  if (typeof window === "undefined") {
-    try {
-      const { getProfessional } = await import("@/lib/professionals");
-      const prof = await getProfessional(id);
-      if (prof) return toWorker(prof);
-    } catch {
-      // fall through
-    }
-  }
-  // Fallback to mock
-  return MOCK_WORKERS.find((w) => w.id === id);
+/**
+ * Synchronous lookup used by client components and proposal cards. Profile
+ * pages fetch the full database record through `loadProfessional` instead.
+ */
+export function getWorker(id: string): Worker | undefined {
+  return getWorkersSync().find((w) => w.id === id);
 }
 
 export async function workersByCategory(slug: string): Promise<Worker[]> {

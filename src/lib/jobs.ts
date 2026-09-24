@@ -1,202 +1,32 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getSql } from "@/lib/db";
-import { URGENCY } from "@/lib/catalog";
+import { getWorker, URGENCY } from "@/lib/catalog";
 import { WORKERS } from "@/lib/catalog.mock";
 import { stripSensitive } from "@/lib/utils";
+import { authMiddleware } from "@/lib/auth/middleware";
 
-export type JobRow = {
-  id: string;
-  category: string;
-  title: string;
-  description: string;
-  neighborhood: string;
-  budget_min: number | null;
-  budget_max: number | null;
-  urgency: string;
-  preferred_worker_id: string | null;
-  created_at: string;
-};
+export type JobStatus = "aberto" | "aceite" | "concluido" | "cancelado";
+export type JobRow = { id: string; category: string; title: string; description: string; neighborhood: string; budget_min: number | null; budget_max: number | null; urgency: string; preferred_worker_id: string | null; created_at: string; status: JobStatus; accepted_proposal_id: string | null };
+export type MessageRow = { id: string; body: string; sender_role: "cliente" | "profissional"; created_at: string };
+export type ProposalRow = { id: string; job_id: string; worker_id: string; amount: number; message: string; eta: string; created_at: string; professional_name?: string; professional_rating?: number; professional_available_today?: boolean; professional_neighborhood?: string; professional_whatsapp?: string };
+type Professional = { id: string; category: string; name: string; rating: number; available_today: boolean; neighborhood: string; whatsapp: string };
 
-export type ProposalRow = {
-  id: string;
-  job_id: string;
-  worker_id: string;
-  amount: number;
-  message: string;
-  eta: string;
-  created_at: string;
-};
+const jobInput = z.object({ category: z.string().min(2).max(40), title: z.string().max(80).optional(), description: z.string().min(8).max(400), neighborhood: z.string().min(2).max(40), budgetMin: z.number().int().min(0).max(5_000_000).optional(), budgetMax: z.number().int().min(0).max(5_000_000).optional(), urgency: z.enum(["hoje", "amanha", "semana", "flexivel"]), preferredWorkerId: z.string().max(80).optional() });
+const jobIdInput = z.object({ id: z.string().min(1).max(100) });
+function newId(prefix: string) { return `${prefix}-${crypto.randomUUID()}`; }
+function pickWorkers(category: string, neighborhood: string, preferred?: string) { const pool = WORKERS.filter((w) => w.category === category); const preferredWorker = preferred ? getWorker(preferred) : undefined; const same = pool.filter((w) => w.neighborhood === neighborhood); const rest = pool.filter((w) => w.neighborhood !== neighborhood); return [...(preferredWorker && preferredWorker.category === category ? [preferredWorker] : []), ...same, ...rest].filter((w, i, arr) => arr.findIndex((x) => x.id === w.id) === i).slice(0, 3); }
+function proposalFor(worker: (typeof WORKERS)[number], urgency: string, isPreferred: boolean) { const amount = worker.rateMin + Math.round((isPreferred ? .35 : .55) * Math.max(0, worker.rateMax - worker.rateMin)); const eta = urgency === "hoje" ? (worker.availableToday ? "hoje, em 1–3 horas" : "amanhã de manhã") : urgency === "amanha" ? "amanhã" : "esta semana"; return { amount, eta, message: `Faço este tipo de trabalho. ${worker.skills.slice(0, 2).join(" e ")}. Preço da visita à volta disto, material à parte.${isPreferred ? " Vi o teu pedido e posso priorizar." : worker.availableToday ? " Estou livre hoje." : ""}` }; }
 
-const jobInput = z.object({
-  category: z.string().min(2).max(40),
-  title: z.string().max(80).optional(),
-  description: z.string().min(8).max(400),
-  neighborhood: z.string().min(2).max(40),
-  budgetMin: z.number().int().min(0).max(5_000_000).optional(),
-  budgetMax: z.number().int().min(0).max(5_000_000).optional(),
-  urgency: z.enum(["hoje", "amanha", "semana", "flexivel"]),
-  preferredWorkerId: z.string().max(80).optional(),
-});
-
-function newId(prefix: string) {
-  return `${prefix}-${crypto.randomUUID()}`;
-}
-
-function pickWorkers(category: string, neighborhood: string, preferred?: string) {
-  const pool = WORKERS.filter((w) => w.category === category);
-  const preferredWorker = preferred ? getWorker(preferred) : undefined;
-  const same = pool.filter((w) => w.neighborhood === neighborhood);
-  const rest = pool.filter((w) => w.neighborhood !== neighborhood);
-  const ordered = [
-    ...(preferredWorker && preferredWorker.category === category
-      ? [preferredWorker]
-      : []),
-    ...same,
-    ...rest,
-  ].filter((w, i, arr) => arr.findIndex((x) => x.id === w.id) === i);
-  return ordered.slice(0, 3);
-}
-
-function proposalFor(
-  worker: (typeof WORKERS)[number],
-  urgency: string,
-  isPreferred: boolean,
-) {
-  const span = Math.max(0, worker.rateMax - worker.rateMin);
-  const amount =
-    worker.rateMin + Math.round((isPreferred ? 0.35 : 0.55) * span);
-  const eta =
-    urgency === "hoje"
-      ? worker.availableToday
-        ? "hoje, em 1–3 horas"
-        : "amanhã de manhã"
-      : urgency === "amanha"
-        ? "amanhã"
-        : "esta semana";
-  const extra = isPreferred
-    ? " Vi o teu pedido e posso priorizar."
-    : worker.availableToday
-      ? " Estou livre hoje."
-      : "";
-  return {
-    amount,
-    eta,
-    message: `Faço este tipo de trabalho. ${worker.skills.slice(0, 2).join(" e ")}. Preço da visita à volta disto, material à parte.${extra}`,
-  };
-}
-
-export const listJobs = createServerFn({ method: "GET" })
-  .validator(
-    z.object({
-      category: z.string().optional(),
-      neighborhood: z.string().optional(),
-    }),
-  )
-  .handler(async ({ data }) => {
-    const sql = await getSql();
-    const category = data.category;
-    const neighborhood = data.neighborhood;
-    if (category && neighborhood) {
-      return sql<JobRow>`
-        select id, category, title, description, neighborhood, budget_min, budget_max, urgency, preferred_worker_id, created_at::text as created_at
-        from jobs
-        where category = ${category} and neighborhood = ${neighborhood}
-        order by created_at desc
-        limit 40
-      `;
-    }
-    if (category) {
-      return sql<JobRow>`
-        select id, category, title, description, neighborhood, budget_min, budget_max, urgency, preferred_worker_id, created_at::text as created_at
-        from jobs
-        where category = ${category}
-        order by created_at desc
-        limit 40
-      `;
-    }
-    if (neighborhood) {
-      return sql<JobRow>`
-        select id, category, title, description, neighborhood, budget_min, budget_max, urgency, preferred_worker_id, created_at::text as created_at
-        from jobs
-        where neighborhood = ${neighborhood}
-        order by created_at desc
-        limit 40
-      `;
-    }
-    return sql<JobRow>`
-      select id, category, title, description, neighborhood, budget_min, budget_max, urgency, preferred_worker_id, created_at::text as created_at
-      from jobs
-      order by created_at desc
-      limit 40
-    `;
-  });
-
-export const getJob = createServerFn({ method: "GET" })
-  .validator(z.object({ id: z.string().min(1).max(80) }))
-  .handler(async ({ data }) => {
-    const sql = await getSql();
-    const jobs = await sql<JobRow>`
-      select id, category, title, description, neighborhood, budget_min, budget_max, urgency, preferred_worker_id, created_at::text as created_at
-      from jobs where id = ${data.id} limit 1
-    `;
-    const job = jobs[0];
-    if (!job) return null;
-    const proposals = await sql<ProposalRow>`
-      select id, job_id, worker_id, amount, message, eta, created_at::text as created_at
-      from proposals where job_id = ${data.id}
-      order by amount asc, created_at asc
-    `;
-    return { job, proposals };
-  });
-
-export const createJob = createServerFn({ method: "POST" })
-  .validator(jobInput)
-  .handler(async ({ data }) => {
-    const sql = await getSql();
-    const description = stripSensitive(data.description);
-    if (description.length < 8) {
-      throw new Error("Descreve o trabalho sem telefone nem email.");
-    }
-    const catLabel =
-      data.category.charAt(0).toUpperCase() + data.category.slice(1);
-    const urgency =
-      URGENCY.find((u) => u.value === data.urgency)?.label ?? "Pedido";
-    const title =
-      stripSensitive(data.title ?? "") ||
-      `${catLabel} em ${data.neighborhood} · ${urgency.toLowerCase()}`;
-    const id = newId("job");
-    const preferred = data.preferredWorkerId || null;
-    await sql`
-      insert into jobs (
-        id, category, title, description, neighborhood, budget_min, budget_max, urgency, preferred_worker_id
-      ) values (
-        ${id}, ${data.category}, ${title}, ${description}, ${data.neighborhood},
-        ${data.budgetMin ?? null}, ${data.budgetMax ?? null}, ${data.urgency}, ${preferred}
-      )
-    `;
-    const workers = pickWorkers(
-      data.category,
-      data.neighborhood,
-      preferred ?? undefined,
-    );
-    for (const worker of workers) {
-      const p = proposalFor(worker, data.urgency, worker.id === preferred);
-      await sql`
-        insert into proposals (id, job_id, worker_id, amount, message, eta)
-        values (
-          ${newId("p")}, ${id}, ${worker.id}, ${p.amount}, ${p.message}, ${p.eta}
-        )
-      `;
-    }
-    const created = await sql<JobRow>`
-      select id, category, title, description, neighborhood, budget_min, budget_max, urgency, preferred_worker_id, created_at::text as created_at
-      from jobs where id = ${id} limit 1
-    `;
-    const proposals = await sql<ProposalRow>`
-      select id, job_id, worker_id, amount, message, eta, created_at::text as created_at
-      from proposals where job_id = ${id}
-      order by amount asc
-    `;
-    return { job: created[0], proposals };
-  });
+export const listJobs = createServerFn({ method: "GET" }).validator(z.object({ category: z.string().optional(), neighborhood: z.string().optional() })).handler(async ({ data }) => { const sql = await getSql(); return sql<JobRow>`select id, category, title, description, neighborhood, budget_min, budget_max, urgency, preferred_worker_id, status, accepted_proposal_id, created_at::text as created_at from jobs where (${data.category ?? null}::text is null or category = ${data.category ?? null}) and (${data.neighborhood ?? null}::text is null or neighborhood = ${data.neighborhood ?? null}) order by created_at desc limit 40`; });
+export const getJob = createServerFn({ method: "GET" }).validator(jobIdInput).handler(async ({ data }) => { const sql = await getSql(); const job = (await sql<JobRow>`select id, category, title, description, neighborhood, budget_min, budget_max, urgency, preferred_worker_id, status, accepted_proposal_id, created_at::text as created_at from jobs where id = ${data.id} limit 1`)[0]; if (!job) return null; const proposals = await sql<ProposalRow>`select p.id, p.job_id, p.worker_id, p.amount, p.message, p.eta, p.created_at::text as created_at, pr.name as professional_name, pr.rating::float as professional_rating, pr.available_today as professional_available_today, pr.neighborhood as professional_neighborhood, pr.whatsapp as professional_whatsapp from proposals p join professionals pr on pr.id = p.worker_id where p.job_id = ${data.id} order by p.amount asc, p.created_at asc`; return { job, proposals }; });
+export const createJob = createServerFn({ method: "POST" }).validator(jobInput).middleware([authMiddleware]).handler(async ({ data, context }) => { const sql = await getSql(); const description = stripSensitive(data.description); if (description.length < 8) throw new Error("Descreve o trabalho sem telefone nem email."); const label = data.category.charAt(0).toUpperCase() + data.category.slice(1); const urgency = URGENCY.find((u) => u.value === data.urgency)?.label ?? "Pedido"; const title = stripSensitive(data.title ?? "") || `${label} em ${data.neighborhood} · ${urgency.toLowerCase()}`; const id = newId("job"); await sql`insert into jobs (id, user_id, category, title, description, neighborhood, budget_min, budget_max, urgency, preferred_worker_id) values (${id}, ${context.userId}, ${data.category}, ${title}, ${description}, ${data.neighborhood}, ${data.budgetMin ?? null}, ${data.budgetMax ?? null}, ${data.urgency}, ${data.preferredWorkerId ?? null})`; for (const worker of pickWorkers(data.category, data.neighborhood, data.preferredWorkerId)) { const p = proposalFor(worker, data.urgency, worker.id === data.preferredWorkerId); await sql`insert into proposals (id, job_id, worker_id, amount, message, eta) values (${newId("p")}, ${id}, ${worker.id}, ${p.amount}, ${p.message}, ${p.eta})`; } return { id }; });
+export const listMyJobs = createServerFn({ method: "GET" }).middleware([authMiddleware]).handler(async ({ context }) => { const sql = await getSql(); return sql<JobRow>`select id, category, title, description, neighborhood, budget_min, budget_max, urgency, preferred_worker_id, status, accepted_proposal_id, created_at::text as created_at from jobs where user_id = ${context.userId} order by created_at desc`; });
+export const getParticipantJob = createServerFn({ method: "GET" }).validator(jobIdInput).middleware([authMiddleware]).handler(async ({ data, context }) => { const sql = await getSql(); const job = (await sql<JobRow>`select id, category, title, description, neighborhood, budget_min, budget_max, urgency, preferred_worker_id, status, accepted_proposal_id, created_at::text as created_at from jobs where id = ${data.id} and (user_id = ${context.userId} or exists (select 1 from proposals p join professionals pr on pr.id = p.worker_id where p.job_id = jobs.id and pr.owner_user_id = ${context.userId})) limit 1`)[0]; if (!job) return null; const ownProfessional = (await sql<Professional>`select id, category, name, rating::float as rating, available_today, neighborhood, whatsapp from professionals where owner_user_id = ${context.userId} limit 1`)[0]; const isClient = !!(await sql<{ id: string }>`select id from jobs where id = ${job.id} and user_id = ${context.userId}`)[0]; const viewerRole = isClient ? "cliente" : "profissional"; const proposals = viewerRole === "profissional" && ownProfessional ? await sql<ProposalRow>`select p.id, p.job_id, p.worker_id, p.amount, p.message, p.eta, p.created_at::text as created_at, pr.name as professional_name, pr.rating::float as professional_rating, pr.available_today as professional_available_today, pr.neighborhood as professional_neighborhood, pr.whatsapp as professional_whatsapp from proposals p join professionals pr on pr.id = p.worker_id where p.job_id = ${job.id} and p.worker_id = ${ownProfessional.id} order by p.created_at asc` : await sql<ProposalRow>`select p.id, p.job_id, p.worker_id, p.amount, p.message, p.eta, p.created_at::text as created_at, pr.name as professional_name, pr.rating::float as professional_rating, pr.available_today as professional_available_today, pr.neighborhood as professional_neighborhood, pr.whatsapp as professional_whatsapp from proposals p join professionals pr on pr.id = p.worker_id where p.job_id = ${job.id} order by p.amount asc, p.created_at asc`; const canChat = job.status === "aceite" && (viewerRole === "cliente" || proposals.some((p) => p.id === job.accepted_proposal_id)); const messages = canChat ? await sql<MessageRow>`select id, body, sender_role, created_at::text as created_at from job_messages where job_id = ${job.id} order by created_at asc` : []; return { job, proposals, messages, viewerRole, canChat }; });
+export const listProfessionalOpenJobs = createServerFn({ method: "GET" }).middleware([authMiddleware]).handler(async ({ context }) => { const sql = await getSql(); const professional = (await sql<Professional>`select id, category, name, rating::float as rating, available_today, neighborhood, whatsapp from professionals where owner_user_id = ${context.userId} and profile_status = 'ativo' limit 1`)[0]; if (!professional) return { professional: null, jobs: [] as JobRow[] }; const jobs = await sql<JobRow>`select id, category, title, description, neighborhood, budget_min, budget_max, urgency, preferred_worker_id, status, accepted_proposal_id, created_at::text as created_at from jobs j where j.category = ${professional.category} and j.status = 'aberto' and not exists (select 1 from proposals p where p.job_id = j.id and p.worker_id = ${professional.id}) order by j.created_at desc limit 40`; return { professional, jobs }; });
+export const submitProfessionalProposal = createServerFn({ method: "POST" }).validator(z.object({ jobId: z.string().min(1), amount: z.number().int().min(1).max(5_000_000), eta: z.string().trim().min(2).max(80), message: z.string().trim().min(8).max(500) })).middleware([authMiddleware]).handler(async ({ data, context }) => { const sql = await getSql(); const professional = (await sql<Professional>`select id, category, name, rating::float as rating, available_today, neighborhood, whatsapp from professionals where owner_user_id = ${context.userId} and profile_status = 'ativo' limit 1`)[0]; if (!professional) throw new Error("Cria primeiro o teu perfil profissional."); const job = (await sql<{ id: string }>`select id from jobs where id = ${data.jobId} and category = ${professional.category} and status = 'aberto'`)[0]; if (!job) throw new Error("Este pedido já não aceita propostas."); await sql`insert into proposals (id, job_id, worker_id, amount, message, eta) values (${newId("p")}, ${data.jobId}, ${professional.id}, ${data.amount}, ${data.message}, ${data.eta}) on conflict (job_id, worker_id) do update set amount = excluded.amount, eta = excluded.eta, message = excluded.message, created_at = now()`; return { ok: true }; });
+export const acceptJobProposal = createServerFn({ method: "POST" }).validator(z.object({ jobId: z.string().min(1), proposalId: z.string().min(1) })).middleware([authMiddleware]).handler(async ({ data, context }) => { const sql = await getSql(); const proposal = (await sql<ProposalRow>`select id, job_id, worker_id, amount, message, eta, created_at::text as created_at from proposals where id = ${data.proposalId} and job_id = ${data.jobId}`)[0]; if (!proposal) throw new Error("Proposta não encontrada."); const changed = await sql<{ id: string }>`update jobs set status = 'aceite', accepted_proposal_id = ${data.proposalId} where id = ${data.jobId} and user_id = ${context.userId} and status = 'aberto' returning id`; if (!changed[0]) throw new Error("Este pedido já não pode ser aceite."); return { proposal }; });
+export const updateMyJobStatus = createServerFn({ method: "POST" }).validator(z.object({ jobId: z.string().min(1), status: z.enum(["cancelado", "concluido"]) })).middleware([authMiddleware]).handler(async ({ data, context }) => { const sql = await getSql(); const rows = await sql<{ id: string }>`update jobs set status = ${data.status}, cancelled_at = case when ${data.status} = 'cancelado' then now() else cancelled_at end, completed_at = case when ${data.status} = 'concluido' then now() else completed_at end where id = ${data.jobId} and user_id = ${context.userId} and status in ('aberto', 'aceite') returning id`; if (!rows[0]) throw new Error("Não foi possível atualizar este pedido."); return { status: data.status }; });
+export const updateMyJob = createServerFn({ method: "POST" }).validator(z.object({ jobId: z.string().min(1), description: z.string().trim().min(8).max(400), budgetMax: z.number().int().min(0).max(5_000_000).nullable().optional(), urgency: z.enum(["hoje", "amanha", "semana", "flexivel"]) })).middleware([authMiddleware]).handler(async ({ data, context }) => { const sql = await getSql(); const description = stripSensitive(data.description); const rows = await sql<{ id: string }>`update jobs set description = ${description}, budget_max = ${data.budgetMax ?? null}, urgency = ${data.urgency} where id = ${data.jobId} and user_id = ${context.userId} and status = 'aberto' returning id`; if (!rows[0]) throw new Error("Só podes editar pedidos que ainda estão abertos."); return { id: rows[0].id }; });
+export const addJobMessage = createServerFn({ method: "POST" }).validator(z.object({ jobId: z.string().min(1), body: z.string().trim().min(1).max(500) })).middleware([authMiddleware]).handler(async ({ data, context }) => { const sql = await getSql(); const client = (await sql<{ id: string }>`select id from jobs where id = ${data.jobId} and user_id = ${context.userId} and status = 'aceite'`)[0]; const professional = client ? null : (await sql<{ id: string }>`select j.id from jobs j join proposals p on p.id = j.accepted_proposal_id join professionals pr on pr.id = p.worker_id where j.id = ${data.jobId} and j.status = 'aceite' and pr.owner_user_id = ${context.userId}`)[0]; if (!client && !professional) throw new Error("A conversa fica disponível depois de aceitares a proposta."); const senderRole = client ? "cliente" : "profissional"; const id = newId("msg"); await sql`insert into job_messages (id, job_id, user_id, sender_role, body) values (${id}, ${data.jobId}, ${context.userId}, ${senderRole}, ${data.body})`; return { id, body: data.body, sender_role: senderRole, created_at: new Date().toISOString() }; });
+export const reviewCompletedJob = createServerFn({ method: "POST" }).validator(z.object({ jobId: z.string().min(1), rating: z.number().int().min(1).max(5), text: z.string().trim().min(8).max(500) })).middleware([authMiddleware]).handler(async ({ data, context }) => { const sql = await getSql(); const row = (await sql<{ worker_id: string }>`select p.worker_id from jobs j join proposals p on p.id = j.accepted_proposal_id where j.id = ${data.jobId} and j.user_id = ${context.userId} and j.status = 'concluido'`)[0]; if (!row) throw new Error("Conclui o pedido antes de avaliar."); await sql`insert into job_reviews (id, job_id, user_id, professional_id, rating, text) values (${newId("review")}, ${data.jobId}, ${context.userId}, ${row.worker_id}, ${data.rating}, ${data.text}) on conflict (job_id) do update set rating = excluded.rating, text = excluded.text`; await sql`update professionals set rating = (select round(avg(rating)::numeric, 1) from job_reviews where professional_id = ${row.worker_id}), jobs_count = jobs_count + 1 where id = ${row.worker_id}`; return { ok: true }; });

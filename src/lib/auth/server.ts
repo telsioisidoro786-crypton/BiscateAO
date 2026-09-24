@@ -1,13 +1,8 @@
-import { createClient } from "@supabase/supabase-js";
 import { betterAuth } from "better-auth";
-import { tanstackStartCookies } from "better-auth/tanstack-start";
-import { getCookie } from "@tanstack/react-start/server";
-import { randomBytes } from "node:crypto";
 import { Pool } from "pg";
 import { ensureDbReady, getPglite } from "../db";
 import { emailAndPasswordEnabled } from "./email-password";
 import { pgliteDialect } from "./pglite-dialect";
-import { AUTH_PROVIDERS } from "./providers";
 
 void ensureDbReady();
 
@@ -15,16 +10,6 @@ const env = (key: string): string | undefined => {
   const value = process.env[key]?.trim();
   return value ? value : undefined;
 };
-
-const authDisabled = env("VITE_AUTH_ENABLED") === "false";
-
-const supabaseUrl = env("SUPABASE_URL")!;
-const supabaseAnonKey = env("SUPABASE_ANON_KEY")!;
-const supabaseServiceKey = env("SUPABASE_SERVICE_ROLE_KEY")!;
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
 
 const databaseUrl = env("DATABASE_URL");
 
@@ -46,39 +31,16 @@ const auth = betterAuth({
   // Social providers via Supabase
   socialProviders: {
     google: {
-      clientId: env("GOOGLE_CLIENT_ID")!,
-      clientSecret: env("GOOGLE_CLIENT_SECRET")!,
+      clientId: env("GOOGLE_CLIENT_ID"),
+      clientSecret: env("GOOGLE_CLIENT_SECRET"),
     },
     github: {
-      clientId: env("GITHUB_CLIENT_ID")!,
-      clientSecret: env("GITHUB_CLIENT_SECRET")!,
+      clientId: env("GITHUB_CLIENT_ID"),
+      clientSecret: env("GITHUB_CLIENT_SECRET"),
     },
   },
 
-  emailAndPassword: { enabled: true },
-
-  // Sync user with Supabase Auth
-  hooks: {
-    after: {
-      async createUser({ user, provider }) {
-        if (provider) {
-          try {
-            await supabaseAdmin.auth.admin.createUser({
-              email: user.email,
-              user_metadata: {
-                name: user.name,
-                avatar_url: user.image,
-                provider: provider.id,
-              },
-              email_confirm: true,
-            });
-          } catch (e) {
-            console.warn("Supabase sync failed:", e);
-          }
-        }
-      },
-    },
-  },
+  emailAndPassword: { enabled: emailAndPasswordEnabled },
 
   session: { cookieCache: { enabled: true, maxAge: 300 } },
 

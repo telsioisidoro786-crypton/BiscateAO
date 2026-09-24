@@ -1,182 +1,33 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
-import { MessageCircle, Send } from "lucide-react";
-import { getCategory, getWorker, urgencyLabel } from "@/lib/catalog";
-import { getJob, type ProposalRow } from "@/lib/jobs";
-import { useBiscate } from "@/lib/store";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { useMemo, useState, type FormEvent } from "react";
+import { CheckCircle2, Clock3, MessageCircle, Pencil, Send, Star, X } from "lucide-react";
+import { toast } from "sonner";
+import { acceptJobProposal, addJobMessage, getParticipantJob, reviewCompletedJob, updateMyJob, updateMyJobStatus } from "@/lib/jobs";
+import { getCategory, urgencyLabel } from "@/lib/catalog";
 import { formatKz, relativeTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { WorkerAvatar } from "@/components/worker-avatar";
-import { Stars } from "@/components/stars";
 
-export const Route = createFileRoute("/pedidos/$id")({
-  loader: async ({ params }) => getJob({ data: { id: params.id } }),
-  component: Pedido,
-});
+export const Route = createFileRoute("/pedidos/$id")({ loader: ({ params }) => getParticipantJob({ data: { id: params.id } }), component: Pedido });
+const stateLabel = { aberto: "Aberto", aceite: "Profissional escolhido", concluido: "Concluído", cancelado: "Cancelado" } as const;
 
 function Pedido() {
-  const data = Route.useLoaderData();
-  const acceptedMap = useBiscate((s) => s.accepted);
-  const acceptProposal = useBiscate((s) => s.acceptProposal);
-  const chats = useBiscate((s) => s.chats);
-  const sendChat = useBiscate((s) => s.sendChat);
-  const [draft, setDraft] = useState("");
-
-  if (!data?.job) {
-    return (
-      <p className="text-sm text-muted">
-        Este pedido já não está no quadro.{" "}
-        <Link to="/pedidos" className="text-primary">
-          Ver pedidos
-        </Link>
-      </p>
-    );
-  }
-
-  const { job, proposals } = data;
-  const cat = getCategory(job.category);
-  const acceptedId = acceptedMap[job.id];
-  const accepted = proposals.find((p) => p.id === acceptedId);
-  const acceptedWorker = accepted ? getWorker(accepted.worker_id) : undefined;
-  const thread = chats[job.id] ?? [];
-
-  function accept(p: ProposalRow) {
-    const w = getWorker(p.worker_id);
-    const greeting = `Combinado. Sou ${w?.name.split(" ")[0] ?? "eu"}. ${p.eta}. Manda a referência da casa e eu levo as ferramentas.`;
-    acceptProposal(job.id, p.id, greeting);
-  }
-
-  function onSend(e: FormEvent) {
-    e.preventDefault();
-    const text = draft.trim();
-    if (!text) return;
-    sendChat(job.id, text);
-    setDraft("");
-  }
-
-  const wa =
-    acceptedWorker &&
-    `https://wa.me/${acceptedWorker.whatsapp}?text=${encodeURIComponent(
-      `Olá ${acceptedWorker.name.split(" ")[0]}, aceitei o teu orçamento no BiscateAO (${formatKz(accepted!.amount)}). ${job.title} em ${job.neighborhood}.`,
-    )}`;
-
-  return (
-    <div className="space-y-6">
-      <header>
-        <p className="text-xs font-medium uppercase tracking-wide text-muted">
-          {cat?.name} · {job.neighborhood} · {urgencyLabel(job.urgency)}
-        </p>
-        <h1 className="mt-1 font-display text-2xl font-semibold leading-tight">
-          {job.title}
-        </h1>
-        <p className="mt-2 text-sm leading-relaxed text-ink">{job.description}</p>
-        <p className="mt-2 text-xs text-faint">
-          {job.budget_max ? `Tecto ${formatKz(job.budget_max)} · ` : null}
-          {relativeTime(job.created_at)}
-        </p>
-      </header>
-
-      {accepted && acceptedWorker ? (
-        <section className="space-y-3 rounded-xl bg-surface p-4 shadow-[var(--shadow-card)]">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-lg font-semibold">Combinado</h2>
-            <Badge variant="good">Aceite</Badge>
-          </div>
-          <Link
-            to="/profissionais/$id"
-            params={{ id: acceptedWorker.id }}
-            className="flex items-center gap-3"
-          >
-            <WorkerAvatar id={acceptedWorker.id} name={acceptedWorker.name} />
-            <div>
-              <p className="font-medium">{acceptedWorker.name}</p>
-              <p className="text-sm text-muted tabular-nums">
-                {formatKz(accepted.amount)} · {accepted.eta}
-              </p>
-            </div>
-          </Link>
-          <div className="space-y-2 rounded-md bg-sunken p-3">
-            {thread.map((line, i) => (
-              <p
-                key={i}
-                className={
-                  line.from === "me"
-                    ? "ml-6 rounded-md bg-primary px-3 py-2 text-sm text-primary-fg"
-                    : "mr-6 rounded-md bg-surface px-3 py-2 text-sm text-ink"
-                }
-              >
-                {line.text}
-              </p>
-            ))}
-          </div>
-          <form onSubmit={onSend} className="flex gap-2">
-            <Input
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder="Escreve a referência da casa…"
-            />
-            <Button type="submit" size="icon" aria-label="Enviar">
-              <Send className="size-4" />
-            </Button>
-          </form>
-          {wa ? (
-            <Button asChild variant="outline" className="w-full">
-              <a href={wa} target="_blank" rel="noreferrer">
-                <MessageCircle className="size-4" />
-                Abrir no WhatsApp
-              </a>
-            </Button>
-          ) : null}
-        </section>
-      ) : (
-        <section className="space-y-3">
-          <h2 className="font-display text-lg font-semibold">
-            {proposals.length} orçamento{proposals.length === 1 ? "" : "s"}
-          </h2>
-          {proposals.map((p) => {
-            const w = getWorker(p.worker_id);
-            if (!w) return null;
-            return (
-              <article
-                key={p.id}
-                className="rounded-xl bg-surface p-4 shadow-[var(--shadow-card)]"
-              >
-                <div className="flex items-start gap-3">
-                  <WorkerAvatar id={w.id} name={w.name} />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <Link
-                        to="/profissionais/$id"
-                        params={{ id: w.id }}
-                        className="font-display font-semibold leading-snug"
-                      >
-                        {w.name}
-                      </Link>
-                      <p className="tabular-nums text-sm font-semibold">
-                        {formatKz(p.amount)}
-                      </p>
-                    </div>
-                    <div className="mt-0.5 flex items-center gap-2 text-xs text-muted">
-                      <Stars value={w.rating} />
-                      <span>{w.neighborhood}</span>
-                      <span>{p.eta}</span>
-                    </div>
-                    <p className="mt-2 text-sm leading-relaxed text-ink">{p.message}</p>
-                    <Button
-                      className="mt-3 w-full"
-                      onClick={() => accept(p)}
-                    >
-                      Aceitar este orçamento
-                    </Button>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </section>
-      )}
-    </div>
-  );
+  const data = Route.useLoaderData(); const router = useRouter(); const [draft, setDraft] = useState(""); const [review, setReview] = useState(""); const [rating, setRating] = useState(5); const [busy, setBusy] = useState(false); const [editing, setEditing] = useState(false); const [description, setDescription] = useState(data?.job?.description ?? ""); const [budget, setBudget] = useState(data?.job?.budget_max?.toString() ?? ""); const [order, setOrder] = useState<"price" | "rating" | "availability">("price"); const [availableOnly, setAvailableOnly] = useState(false);
+  if (!data?.job) return <p className="rounded-xl bg-surface p-5 text-sm text-muted">Este pedido não está disponível para a tua conta. <Link to="/pedidos" className="text-primary">Ver meus pedidos</Link>.</p>;
+  const { job, proposals, messages, viewerRole, canChat } = data; const clientView = viewerRole === "cliente"; const accepted = proposals.find((p) => p.id === job.accepted_proposal_id); const visible = useMemo(() => proposals.filter((p) => !availableOnly || p.professional_available_today).sort((a, b) => order === "price" ? a.amount - b.amount : order === "rating" ? (b.professional_rating ?? 0) - (a.professional_rating ?? 0) : Number(b.professional_available_today) - Number(a.professional_available_today)), [proposals, order, availableOnly]); const refresh = () => router.invalidate();
+  async function accept(proposalId: string) { setBusy(true); try { await acceptJobProposal({ data: { jobId: job.id, proposalId } }); toast.success("Orçamento aceite. A conversa está aberta."); await refresh(); } catch (error) { toast.error(error instanceof Error ? error.message : "Não foi possível aceitar."); } finally { setBusy(false); } }
+  async function changeStatus(status: "cancelado" | "concluido") { setBusy(true); try { await updateMyJobStatus({ data: { jobId: job.id, status } }); toast.success(status === "concluido" ? "Pedido concluído." : "Pedido cancelado."); await refresh(); } catch (error) { toast.error(error instanceof Error ? error.message : "Não foi possível atualizar."); } finally { setBusy(false); } }
+  async function send(event: FormEvent) { event.preventDefault(); if (!draft.trim()) return; try { await addJobMessage({ data: { jobId: job.id, body: draft } }); setDraft(""); await refresh(); } catch (error) { toast.error(error instanceof Error ? error.message : "Não foi possível enviar."); } }
+  async function submitReview(event: FormEvent) { event.preventDefault(); try { await reviewCompletedJob({ data: { jobId: job.id, rating, text: review } }); setReview(""); toast.success("Avaliação guardada. Obrigado!"); } catch (error) { toast.error(error instanceof Error ? error.message : "Não foi possível avaliar."); } }
+  async function saveEdit(event: FormEvent) { event.preventDefault(); setBusy(true); try { await updateMyJob({ data: { jobId: job.id, description, budgetMax: budget ? Number(budget) : null, urgency: job.urgency as "hoje" | "amanha" | "semana" | "flexivel" } }); setEditing(false); toast.success("Pedido atualizado."); await refresh(); } catch (error) { toast.error(error instanceof Error ? error.message : "Não foi possível editar."); } finally { setBusy(false); } }
+  const cat = getCategory(job.category); const whatsappMessage = accepted ? encodeURIComponent(`Olá ${accepted.professional_name ?? ""}, aceitei o teu orçamento de ${formatKz(accepted.amount)} para “${job.title}” no BiscateAO. Podemos combinar o serviço?`) : "";
+  return <div className="space-y-5"><header><p className="text-xs font-medium uppercase tracking-wide text-muted">{cat?.name} · {job.neighborhood} · {urgencyLabel(job.urgency)}</p><h1 className="mt-1 font-display text-2xl font-semibold">{job.title}</h1>{editing ? <form onSubmit={saveEdit} className="mt-3 space-y-2"><Textarea required minLength={8} value={description} onChange={(e) => setDescription(e.target.value)} /><Input inputMode="numeric" value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="Orçamento máximo (opcional)" /><div className="flex gap-2"><Button type="submit" size="sm" disabled={busy}>Guardar alterações</Button><Button type="button" variant="outline" size="sm" onClick={() => setEditing(false)}>Cancelar</Button></div></form> : <><p className="mt-2 text-sm text-ink">{job.description}</p><p className="mt-2 text-xs text-faint">{relativeTime(job.created_at)}</p></>}</header><div className="flex flex-wrap items-center gap-2"><Badge variant={job.status === "concluido" ? "good" : "outline"}>{stateLabel[job.status]}</Badge>{job.status === "aberto" && clientView ? <><Button variant="outline" size="sm" disabled={busy} onClick={() => setEditing(true)}><Pencil className="size-4" />Editar</Button><Button variant="outline" size="sm" disabled={busy} onClick={() => changeStatus("cancelado")}><X className="size-4" />Cancelar</Button></> : null}{job.status === "aceite" && clientView ? <Button size="sm" disabled={busy} onClick={() => changeStatus("concluido")}><CheckCircle2 className="size-4" />Marcar concluído</Button> : null}</div>
+    {job.status === "aberto" && clientView ? <section className="space-y-3"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-display text-lg font-semibold">Comparar propostas ({proposals.length})</h2><div className="flex flex-wrap gap-2"><select value={order} onChange={(e) => setOrder(e.target.value as typeof order)} className="h-9 rounded-md border border-border bg-surface px-2 text-sm"><option value="price">Menor preço</option><option value="rating">Melhor avaliação</option><option value="availability">Disponibilidade</option></select><Button type="button" size="sm" variant={availableOnly ? "default" : "outline"} onClick={() => setAvailableOnly(!availableOnly)}><Clock3 className="size-4" />Livre hoje</Button></div></div>{visible.length ? visible.map((p) => <ProposalCard key={p.id} proposal={p} busy={busy} onAccept={() => accept(p.id)} />) : <p className="rounded-xl bg-surface p-4 text-sm text-muted">Nenhuma proposta com este filtro.</p>}</section> : null}
+    {job.status === "aberto" && !clientView ? <section className="rounded-2xl bg-surface p-5 shadow-[var(--shadow-card)]"><h2 className="font-display text-lg font-semibold">O teu orçamento foi enviado</h2><p className="mt-2 text-sm text-muted">O cliente está a comparar propostas. O contacto e a conversa serão libertados apenas se escolher a tua proposta.</p>{proposals[0] ? <p className="mt-3 font-semibold">{formatKz(proposals[0].amount)} · {proposals[0].eta}</p> : null}</section> : null}
+    {accepted ? <section className="space-y-3 rounded-2xl bg-surface p-5 shadow-[var(--shadow-card)]"><div className="flex items-center gap-3"><WorkerAvatar id={accepted.worker_id} name={accepted.professional_name ?? "Profissional"} /><div><p className="font-semibold">{clientView ? accepted.professional_name : "Proposta aceite"}</p><p className="text-sm text-muted">{formatKz(accepted.amount)} · {accepted.eta}</p></div></div>{canChat ? <><div className="space-y-2 rounded-xl bg-sunken p-3">{messages.length ? messages.map((m) => <div key={m.id} className={m.sender_role === viewerRole ? "ml-8 rounded-lg bg-primary px-3 py-2 text-sm text-primary-fg" : "mr-8 rounded-lg bg-surface px-3 py-2 text-sm shadow-sm"}>{m.body}</div>) : <p className="text-sm text-muted">A proposta foi aceite. Combina os detalhes do serviço por aqui.</p>}</div>{job.status === "aceite" ? <form onSubmit={send} className="flex gap-2"><Input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Escreve uma mensagem" /><Button type="submit" size="icon"><Send className="size-4" /></Button></form> : null}</> : null}{clientView && accepted.professional_whatsapp && (job.status === "aceite" || job.status === "concluido") ? <Button asChild variant="outline" className="w-full"><a href={`https://wa.me/${accepted.professional_whatsapp}?text=${whatsappMessage}`} target="_blank" rel="noreferrer"><MessageCircle className="size-4" />Continuar no WhatsApp</a></Button> : null}</section> : null}
+    {job.status === "concluido" && clientView && accepted ? <form onSubmit={submitReview} className="space-y-3 rounded-2xl bg-surface p-5 shadow-[var(--shadow-card)]"><h2 className="font-display text-lg font-semibold">Avaliar serviço</h2><div className="flex gap-1">{[1, 2, 3, 4, 5].map((n) => <button key={n} type="button" aria-label={`${n} estrelas`} onClick={() => setRating(n)} className={n <= rating ? "text-primary" : "text-faint"}><Star className="size-5 fill-current" /></button>)}</div><Textarea required minLength={8} value={review} onChange={(e) => setReview(e.target.value)} placeholder="Conta como foi o serviço." /><Button type="submit">Guardar avaliação</Button></form> : null}</div>;
 }
+function ProposalCard({ proposal, busy, onAccept }: { proposal: { worker_id: string; amount: number; eta: string; message: string; professional_name?: string; professional_rating?: number; professional_available_today?: boolean; professional_neighborhood?: string }; busy: boolean; onAccept: () => void }) { return <article className="rounded-2xl bg-surface p-4 shadow-[var(--shadow-card)]"><div className="flex gap-3"><WorkerAvatar id={proposal.worker_id} name={proposal.professional_name ?? "Profissional"} /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center justify-between gap-2"><p className="font-semibold">{proposal.professional_name ?? "Profissional"}</p><p className="font-display text-lg font-semibold text-primary">{formatKz(proposal.amount)}</p></div><p className="mt-1 text-sm text-muted">{proposal.professional_rating ? `${proposal.professional_rating.toFixed(1)} ★` : "Novo profissional"} · {proposal.professional_neighborhood}{proposal.professional_available_today ? " · Livre hoje" : ""}</p><p className="mt-2 text-sm">{proposal.message}</p><p className="mt-2 text-sm font-medium">Prazo: {proposal.eta}</p><Button className="mt-3 w-full" disabled={busy} onClick={onAccept}>Aceitar orçamento</Button></div></div></article>; }

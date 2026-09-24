@@ -1,4 +1,6 @@
 import { getSql } from "@/lib/db";
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 
 export type Professional = {
   id: string;
@@ -146,6 +148,11 @@ export async function getProfessional(id: string): Promise<ProfessionalWithRevie
   };
 }
 
+/** Client-safe server boundary for a professional profile and its reviews. */
+export const loadProfessional = createServerFn({ method: "GET" })
+  .validator(z.object({ id: z.string().min(1).max(100) }))
+  .handler(async ({ data }) => getProfessional(data.id));
+
 /** Search professionals by query string (name, bio, skills, category, neighborhood) */
 export async function searchProfessionals(
   query: string,
@@ -244,3 +251,17 @@ export async function getCategoriesWithCounts(): Promise<
     count: Number(r.count),
   }));
 }
+
+/** Client-safe server boundary for the public oficio directory. */
+export const loadCategoriesWithCounts = createServerFn({ method: "GET" })
+  .handler(async () => getCategoriesWithCounts());
+
+/** Client-safe server boundary for category results. */
+export const loadProfessionalsByCategory = createServerFn({ method: "GET" })
+  .validator(z.object({ category: z.string().min(1).max(40), limit: z.number().int().min(1).max(100).optional() }))
+  .handler(async ({ data }) => professionalsByCategory(data.category, data.limit ?? 100));
+
+/** Client-safe server boundary for the home-page professional search. */
+export const loadProfessionalSearch = createServerFn({ method: "GET" })
+  .validator(z.object({ query: z.string().min(1).max(80), neighborhood: z.string().max(40).optional(), limit: z.number().int().min(1).max(50).optional() }))
+  .handler(async ({ data }) => searchProfessionals(data.query, data.neighborhood, data.limit ?? 20));

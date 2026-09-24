@@ -1,5 +1,5 @@
 {
-  "url": "http://127.0.0.1:8080/",
+  "url": "http://127.0.0.1:8080/oficios/canalizador",
   "viewports": {
     "desktop": {
       "width": 1280,
@@ -7,13 +7,13 @@
       "status": 200,
       "title": "BiscateAO",
       "hasCanvas": false,
-      "bodyTextLen": 1287,
-      "bodyTextHash": "9572a17ec8a2aa6e64329b531f7e22443dcdb419271925e8c9401a847936d050",
-      "bodyTextPrefix": "BiscateAO Início Ofícios Pedir Pedidos Guardados Viana LUANDA · ",
+      "bodyTextLen": 275,
+      "bodyTextHash": "843535b9b6db28a567079aabc06480ea1f11785ab4bc319df9ca7b613205ffbd",
+      "bodyTextPrefix": "BiscateAO Início Ofícios Pedir Pedidos Guardados Viana TORNEIRA,",
       "horizontalOverflow": false,
       "consoleErrors": [],
       "pageErrors": [],
-      "screenshot": "C:\\Users\\Administrador\\Documents\\biscateAO\\screenshots\\app-builder-preview.png"
+      "screenshot": "C:\\Users\\Administrador\\Documents\\biscateAO\\screenshots\\oficio-detail-preview.png"
     },
     "mobile": {
       "width": 390,
@@ -21,18 +21,18 @@
       "status": 200,
       "title": "BiscateAO",
       "hasCanvas": false,
-      "bodyTextLen": 1287,
-      "bodyTextHash": "0c0253416c21daef67bced4eac3f715de32ffcf647269d3ce8e055238188c7e2",
-      "bodyTextPrefix": "BiscateAO Viana LUANDA · OFÍCIOS DO BAIRRO O biscate que precisa",
+      "bodyTextLen": 275,
+      "bodyTextHash": "14a8e04385437b926defa2698d80730b86540bae37e81f6bfe6c9defdf5951c8",
+      "bodyTextPrefix": "BiscateAO Viana TORNEIRA, CANO, ESGOTO, TANQUE Canalizadores SM ",
       "horizontalOverflow": false,
       "consoleErrors": [],
       "pageErrors": [],
-      "screenshot": "C:\\Users\\Administrador\\Documents\\biscateAO\\screenshots\\app-builder-preview-mobile.png"
+      "screenshot": "C:\\Users\\Administrador\\Documents\\biscateAO\\screenshots\\oficio-detail-preview-mobile.png"
     }
   },
   "brandWarnings": [
     "BRAND NOTE: no custom public/og.jpg — the platform will serve the og.grok.me placeholder. Custom cards are the default for games of every kind (DOM board/word games included), whimsical apps, creative tools, and brand-forward pages — only plain utilities (converters, CRUD trackers, admin dashboards) keep the placeholder. If this app is not a plain utility, finish the brand-asset pass per \\workspace\\.grok\\skills\\og\\SKILL.md."
   ],
   "authWarnings": [],
-  "verdictFile": "C:\\Users\\Administrador\\Documents\\biscateAO\\screenshots\\app-builder-preview.json"
+  "verdictFile": "C:\\Users\\Administrador\\Documents\\biscateAO\\screenshots\\oficio-detail-preview.json"
 }

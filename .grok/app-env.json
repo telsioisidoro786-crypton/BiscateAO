@@ -1,14 +1,5 @@
 {
   "VITE_AUTH_ENABLED": "true",
-  "DATABASE_URL": "postgresql://neondb_owner:npg_0neyKFIbS4Hf@ep-holy-surf-b5esi84v-pooler.c-7.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
-  "VITE_VAPID_PUBLIC_KEY": "BCephsr2fu1oeRHGIuZSMSu7Ynd9SzIkvhH_2DtJzdGx4Hb6-9lgBN_ohuu1Ibv1-WbWulg6EMVkfntho0h_VxA",
-  "BETTER_AUTH_SECRET": "gere-uma-chave-de-32-chars-com-openssl-rand-hex-32",
-  "BETTER_AUTH_URL": "http://localhost:8080",
-  "SUPABASE_URL": "https://djutlpchhyvciktthhhx.supabase.co",
-  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqdXRscGNoaHl2Y2lrdGRoaGh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxMTIwNTYsImV4cCI6MjEwNTY4ODA1Nn0.KTCWHr8QmF3KqdjUT2GBBHGVdQ_v7XJNqoEcQcnWlZE",
-  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqdXRscGNoaHl2Y2lrdGRoaGh4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MDExMjA1NiwiZXhwIjoyMTA1Njg4MDU2fQ.f9rp4FzWV6i60ISmY1FxU8SVhYNidANb1xwP1L3o2_Q",
-  "GOOGLE_CLIENT_ID": "seu-google-client-id.apps.googleusercontent.com",
-  "GOOGLE_CLIENT_SECRET": "GOCSPX-seu-google-secret",
-  "GITHUB_CLIENT_ID": "Ov23li-seu-github-client-id",
-  "GITHUB_CLIENT_SECRET": "seu-github-secret"
+  "VITE_VAPID_PUBLIC_KEY": "BOVUWGXzxE5UrdMb_umHbVrQzqiBFWVQFxhxjrKXjnVKG22t-f7ugtSUA07uIczrfzKpjOHSEP-DgaDMKMeUaZk",
+  "deploy": { "database": true }
 }

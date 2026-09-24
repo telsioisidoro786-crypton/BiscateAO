@@ -4,17 +4,14 @@ import { useMemo, useState } from "react";
 import {
   CATEGORIES,
   getCategory,
-  nearbyWorkers,
-  searchWorkers,
   urgencyLabel,
 } from "@/lib/catalog";
 import { listJobs } from "@/lib/jobs";
-import { listProfessionals, nearbyProfessionals, searchProfessionals } from "@/lib/professionals";
+import { loadProfessionalSearch, type Professional } from "@/lib/professionals";
 import { useBiscate } from "@/lib/store";
 import { formatKz, relativeTime } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { WorkerCard } from "@/components/worker-card";
-import { z } from "zod";
 
 export const Route = createFileRoute("/")({
   loader: async ({ request }) => {
@@ -28,7 +25,7 @@ function Home() {
   const { jobs, nearbyPros, neighborhood: loaderNeighborhood } = Route.useLoaderData();
   const neighborhood = useBiscate((s) => s.neighborhood) || loaderNeighborhood;
   const [q, setQ] = useState("");
-  const [searchResults, setSearchResults] = useState<ReturnType<typeof searchProfessionals> | null>(null);
+  const [searchResults, setSearchResults] = useState<Professional[] | null>(null);
   const [searching, setSearching] = useState(false);
 
   const nearby = useMemo(() => {
@@ -58,8 +55,7 @@ function Home() {
     }
     setSearching(true);
     try {
-      const { searchProfessionals } = await import("@/lib/professionals");
-      const results = await searchProfessionals(query, neighborhood, 20);
+      const results = await loadProfessionalSearch({ data: { query, neighborhood, limit: 20 } });
       setSearchResults(results);
     } catch (error) {
       console.error("Search error:", error);

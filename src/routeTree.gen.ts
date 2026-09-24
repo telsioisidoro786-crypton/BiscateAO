@@ -20,6 +20,8 @@ import { Route as OficiosSlugRouteImport } from './routes/oficios.$slug'
 import { Route as PedidosIndexRouteImport } from './routes/pedidos.index'
 import { Route as PedidosIdRouteImport } from './routes/pedidos.$id'
 import { Route as ProfissionaisIdRouteImport } from './routes/profissionais.$id'
+import { Route as ProfissionalCadastrarRouteImport } from './routes/profissional.cadastrar'
+import { Route as ProfissionalPedidosRouteImport } from './routes/profissional.pedidos'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -77,6 +79,16 @@ const ProfissionaisIdRoute = ProfissionaisIdRouteImport.update({
   path: '/profissionais/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfissionalCadastrarRoute = ProfissionalCadastrarRouteImport.update({
+  id: '/profissional/cadastrar',
+  path: '/profissional/cadastrar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfissionalPedidosRoute = ProfissionalPedidosRouteImport.update({
+  id: '/profissional/pedidos',
+  path: '/profissional/pedidos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -93,6 +105,8 @@ export interface FileRoutesByFullPath {
   '/oficios/$slug': typeof OficiosSlugRoute
   '/pedidos/$id': typeof PedidosIdRoute
   '/profissionais/$id': typeof ProfissionaisIdRoute
+  '/profissional/cadastrar': typeof ProfissionalCadastrarRoute
+  '/profissional/pedidos': typeof ProfissionalPedidosRoute
   '/oficios/': typeof OficiosIndexRoute
   '/pedidos/': typeof PedidosIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -107,6 +121,8 @@ export interface FileRoutesByTo {
   '/oficios/$slug': typeof OficiosSlugRoute
   '/pedidos/$id': typeof PedidosIdRoute
   '/profissionais/$id': typeof ProfissionaisIdRoute
+  '/profissional/cadastrar': typeof ProfissionalCadastrarRoute
+  '/profissional/pedidos': typeof ProfissionalPedidosRoute
   '/oficios': typeof OficiosIndexRoute
   '/pedidos': typeof PedidosIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -122,6 +138,8 @@ export interface FileRoutesById {
   '/oficios/$slug': typeof OficiosSlugRoute
   '/pedidos/$id': typeof PedidosIdRoute
   '/profissionais/$id': typeof ProfissionaisIdRoute
+  '/profissional/cadastrar': typeof ProfissionalCadastrarRoute
+  '/profissional/pedidos': typeof ProfissionalPedidosRoute
   '/oficios/': typeof OficiosIndexRoute
   '/pedidos/': typeof PedidosIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -138,6 +156,8 @@ export interface FileRouteTypes {
     | '/oficios/$slug'
     | '/pedidos/$id'
     | '/profissionais/$id'
+    | '/profissional/cadastrar'
+    | '/profissional/pedidos'
     | '/oficios/'
     | '/pedidos/'
     | '/api/auth/$'
@@ -152,6 +172,8 @@ export interface FileRouteTypes {
     | '/oficios/$slug'
     | '/pedidos/$id'
     | '/profissionais/$id'
+    | '/profissional/cadastrar'
+    | '/profissional/pedidos'
     | '/oficios'
     | '/pedidos'
     | '/api/auth/$'
@@ -166,6 +188,8 @@ export interface FileRouteTypes {
     | '/oficios/$slug'
     | '/pedidos/$id'
     | '/profissionais/$id'
+    | '/profissional/cadastrar'
+    | '/profissional/pedidos'
     | '/oficios/'
     | '/pedidos/'
     | '/api/auth/$'
@@ -181,6 +205,8 @@ export interface RootRouteChildren {
   OficiosSlugRoute: typeof OficiosSlugRoute
   PedidosIdRoute: typeof PedidosIdRoute
   ProfissionaisIdRoute: typeof ProfissionaisIdRoute
+  ProfissionalCadastrarRoute: typeof ProfissionalCadastrarRoute
+  ProfissionalPedidosRoute: typeof ProfissionalPedidosRoute
   OficiosIndexRoute: typeof OficiosIndexRoute
   PedidosIndexRoute: typeof PedidosIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -265,6 +291,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfissionaisIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profissional/cadastrar': {
+      id: '/profissional/cadastrar'
+      path: '/profissional/cadastrar'
+      fullPath: '/profissional/cadastrar'
+      preLoaderRoute: typeof ProfissionalCadastrarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profissional/pedidos': {
+      id: '/profissional/pedidos'
+      path: '/profissional/pedidos'
+      fullPath: '/profissional/pedidos'
+      preLoaderRoute: typeof ProfissionalPedidosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -285,6 +325,8 @@ const rootRouteChildren: RootRouteChildren = {
   OficiosSlugRoute: OficiosSlugRoute,
   PedidosIdRoute: PedidosIdRoute,
   ProfissionaisIdRoute: ProfissionaisIdRoute,
+  ProfissionalCadastrarRoute: ProfissionalCadastrarRoute,
+  ProfissionalPedidosRoute: ProfissionalPedidosRoute,
   OficiosIndexRoute: OficiosIndexRoute,
   PedidosIndexRoute: PedidosIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,

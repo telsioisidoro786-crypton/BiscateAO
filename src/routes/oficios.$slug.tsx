@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { getCategory } from "@/lib/catalog";
-import { professionalsByCategory } from "@/lib/professionals";
+import { loadProfessionalsByCategory } from "@/lib/professionals";
 import { useBiscate } from "@/lib/store";
 import { WorkerCard } from "@/components/worker-card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ export const Route = createFileRoute("/oficios/$slug")({
     const { slug } = params;
     const category = slug;
 
-    const professionals = await professionalsByCategory(category, 100);
+    const professionals = await loadProfessionalsByCategory({ data: { category, limit: 100 } });
     return { professionals };
   },
   component: Oficio,
