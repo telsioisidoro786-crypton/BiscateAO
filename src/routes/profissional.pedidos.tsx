@@ -2,22 +2,23 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { ClipboardList, Send } from "lucide-react";
 import { toast } from "sonner";
-import { listProfessionalOpenJobs, submitProfessionalProposal, type JobRow } from "@/lib/jobs";
+import { listProfessionalOpenJobsOptional, submitProfessionalProposal, type JobRow } from "@/lib/jobs";
 import { formatKz, relativeTime } from "@/lib/utils";
 import { urgencyLabel } from "@/lib/catalog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { NoJobs } from "@/components/empty-state";
 
 export const Route = createFileRoute("/profissional/pedidos")({
-  loader: () => listProfessionalOpenJobs(),
+  loader: () => listProfessionalOpenJobsOptional(),
   component: PedidosProfissional,
 });
 
 function PedidosProfissional() {
   const data = Route.useLoaderData();
   if (!data.professional) return <section className="rounded-2xl bg-surface p-6 text-center shadow-[var(--shadow-card)]"><ClipboardList className="mx-auto size-8 text-primary" /><h1 className="mt-3 font-display text-xl font-semibold">Cria o teu perfil para receber pedidos</h1><p className="mt-2 text-sm text-muted">Vamos mostrar apenas os pedidos abertos do teu ofício.</p><Button asChild className="mt-4"><Link to="/profissional/cadastrar">Criar perfil profissional</Link></Button></section>;
-  return <div className="space-y-5"><header><p className="text-sm font-medium text-primary">Área profissional</p><h1 className="font-display text-2xl font-semibold">Pedidos para o teu ofício</h1><p className="mt-1 text-sm text-muted">Envia um orçamento claro. O contacto do cliente continua protegido até ele aceitar.</p></header>{data.jobs.length ? <div className="grid gap-4 lg:grid-cols-2">{data.jobs.map((job) => <QuoteCard key={job.id} job={job} />)}</div> : <div className="rounded-2xl bg-surface p-7 text-center shadow-[var(--shadow-card)]"><h2 className="font-display text-lg font-semibold">Sem pedidos novos por agora</h2><p className="mt-1 text-sm text-muted">Quando surgir um pedido de {data.professional.category}, ele aparece aqui.</p></div>}</div>;
+  return <div className="space-y-5"><header><p className="text-sm font-medium text-primary">Área profissional</p><h1 className="font-display text-2xl font-semibold">Pedidos para o teu ofício</h1><p className="mt-1 text-sm text-muted">Envia um orçamento claro. O contacto do cliente continua protegido até ele aceitar.</p></header>{data.jobs.length ? <div className="grid gap-4 lg:grid-cols-2">{data.jobs.map((job) => <QuoteCard key={job.id} job={job} />)}</div> : <NoJobs />}</div>;
 }
 
 function QuoteCard({ job }: { job: JobRow }) {

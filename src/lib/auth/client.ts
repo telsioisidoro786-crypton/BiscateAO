@@ -25,7 +25,7 @@ export async function signIn(
   const errorCallbackURL = opts.errorCallbackURL ?? "/";
 
   try {
-    const { data, error } = await authClient.signIn.oauth2({
+    const { data, error } = await (authClient.signIn as any).oauth2({
       providerId,
       callbackURL,
       errorCallbackURL,
@@ -46,7 +46,7 @@ export async function signInEmail(email: string, password: string) {
 }
 
 export async function signUpEmail(email: string, password: string, name?: string) {
-  const { error } = await authClient.signUp.email({ email, password, name });
+  const { error } = await (authClient.signUp as any).email({ email, password, name });
   if (error) throw new Error(error.message ?? "Sign-up failed");
 }
 

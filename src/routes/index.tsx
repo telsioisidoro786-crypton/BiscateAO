@@ -12,11 +12,12 @@ import { useBiscate } from "@/lib/store";
 import { formatKz, relativeTime } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { WorkerCard } from "@/components/worker-card";
+import { WorkerCardSkeleton } from "@/components/skeleton";
 
 export const Route = createFileRoute("/")({
-  loader: async ({ request }) => {
+  loader: async ({ context }) => {
     const jobs = await listJobs({ data: {} });
-    return { jobs, nearbyPros: [], neighborhood: "Viana" };
+    return { jobs, nearbyPros: [] as { id: string; name: string; category: string; neighborhood: string; years: number; rateMin: number; rateMax: number; rating: number; jobsCount: number; availableToday: boolean; bio: string; skills: string[]; responseMins: number; whatsapp: string }[], neighborhood: "Viana" };
   },
   component: Home,
 });
@@ -33,7 +34,7 @@ function Home() {
       id: p.id,
       name: p.name,
       category: p.category,
-      neighborhood: p.neighborhood,
+      neighborhood: p.neighborhood as "Palanca" | "Viana" | "Cacuaco" | "Cazenga" | "Sambizanga" | "Rangel" | "Hoji-ya-Henda" | "Camama" | "Kilamba" | "Talatona" | "Benfica" | "Zango" | "Panguila" | "Maianga" | "Samba" | "Belas",
       years: p.years,
       rateMin: p.rateMin,
       rateMax: p.rateMax,
@@ -116,9 +117,7 @@ function Home() {
           {searching ? (
             <div className="space-y-2">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="animate-pulse space-y-2">
-                  <div className="h-20 bg-sunken rounded-xl" />
-                </div>
+                <WorkerCardSkeleton key={i} />
               ))}
             </div>
           ) : searchResults && searchResults.length === 0 ? (
@@ -138,7 +137,7 @@ function Home() {
                     id: w.id,
                     name: w.name,
                     category: w.category,
-                    neighborhood: w.neighborhood,
+                    neighborhood: w.neighborhood as "Palanca" | "Viana" | "Cacuaco" | "Cazenga" | "Sambizanga" | "Rangel" | "Hoji-ya-Henda" | "Camama" | "Kilamba" | "Talatona" | "Benfica" | "Zango" | "Panguila" | "Maianga" | "Samba" | "Belas",
                     years: w.years,
                     rateMin: w.rateMin,
                     rateMax: w.rateMax,

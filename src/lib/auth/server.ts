@@ -22,36 +22,43 @@ const database = env("DATABASE_URL")
   ? new Pool({ connectionString: databaseUrl })
   : { dialect: pgliteDialect(() => getPglite()), type: "postgres" as const };
 
+const isLocalhost = (env("BETTER_AUTH_URL") ?? "http://localhost:8080").startsWith("http://localhost") || (env("BETTER_AUTH_URL") ?? "http://localhost:8080").startsWith("http://127.0.0.1");
+
+const socialProviders: Record<string, { clientId: string; clientSecret: string }> = {};
+if (env("GOOGLE_CLIENT_ID") && env("GOOGLE_CLIENT_SECRET")) {
+  socialProviders.google = {
+    clientId: env("GOOGLE_CLIENT_ID")!,
+    clientSecret: env("GOOGLE_CLIENT_SECRET")!,
+  };
+}
+if (env("GITHUB_CLIENT_ID") && env("GITHUB_CLIENT_SECRET")) {
+  socialProviders.github = {
+    clientId: env("GITHUB_CLIENT_ID")!,
+    clientSecret: env("GITHUB_CLIENT_SECRET")!,
+  };
+}
+
 const auth = betterAuth({
   baseURL: env("BETTER_AUTH_URL") ?? "http://localhost:8080",
-  secret: env("BETTER_AUTH_SECRET")!,
+  secret: env("BETTER_AUTH_SECRET") ?? "dev-secret-change-in-production",
   database,
   trustedOrigins: [
     "http://localhost:8080",
     "http://127.0.0.1:8080",
     "https://*.grok-sandbox.com",
-    env("BETTER_AUTH_URL")!,
+    env("BETTER_AUTH_URL") ?? "http://localhost:8080",
   ].filter(Boolean),
 
-  // Social providers via Supabase
-  socialProviders: {
-    google: {
-      clientId: env("GOOGLE_CLIENT_ID"),
-      clientSecret: env("GOOGLE_CLIENT_SECRET"),
-    },
-    github: {
-      clientId: env("GITHUB_CLIENT_ID"),
-      clientSecret: env("GITHUB_CLIENT_SECRET"),
-    },
-  },
+  // Social providers via Supabase - only when credentials are configured
+  socialProviders: Object.keys(socialProviders).length > 0 ? socialProviders : undefined,
 
   emailAndPassword: { enabled: emailAndPasswordEnabled },
 
   session: { cookieCache: { enabled: true, maxAge: 300 } },
 
   advanced: {
-    useSecureCookies: false,
-    defaultCookieAttributes: { secure: true, sameSite: "lax", path: "/" },
+    useSecureCookies: !isLocalhost,
+    defaultCookieAttributes: { secure: !isLocalhost, sameSite: "lax", path: "/" },
     cookies: {
       session_token: { name: "__Host-session_token" },
       session_data: { name: "__Host-session_data" },

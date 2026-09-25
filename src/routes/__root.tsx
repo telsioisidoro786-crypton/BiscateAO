@@ -9,6 +9,7 @@ import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { AppShell } from "@/components/app-shell";
 import { PWARegistrar } from "@/components/pwa-registrar";
 import { Toaster } from "sonner";
+import { ThemeProvider } from "@/lib/theme";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "BiscateAO";
@@ -45,9 +46,11 @@ export const Route = createRootRoute({
       <body className="min-h-dvh bg-bg text-ink">
         <PreviewHostBridge />
         <AuthProvider>
-          <AppShell>
-            <Outlet />
-          </AppShell>
+          <ThemeProvider>
+            <AppShell>
+              <Outlet />
+            </AppShell>
+          </ThemeProvider>
           <PWARegistrar />
           <Toaster
             position="top-center"

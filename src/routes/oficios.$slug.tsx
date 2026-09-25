@@ -1,10 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { getCategory } from "@/lib/catalog";
 import { loadProfessionalsByCategory } from "@/lib/professionals";
 import { useBiscate } from "@/lib/store";
 import { WorkerCard } from "@/components/worker-card";
 import { Button } from "@/components/ui/button";
+import { NoProfessionals } from "@/components/empty-state";
 
 export const Route = createFileRoute("/oficios/$slug")({
   loader: async ({ params }) => {
@@ -22,13 +23,14 @@ function Oficio() {
   const { professionals } = Route.useLoaderData();
   const cat = getCategory(slug);
   const neighborhood = useBiscate((s) => s.neighborhood);
+  const navigate = useNavigate();
 
   const workers = useMemo(() => {
     return professionals.map((p) => ({
       id: p.id,
       name: p.name,
       category: p.category,
-      neighborhood: p.neighborhood,
+      neighborhood: p.neighborhood as "Palanca" | "Viana" | "Cacuaco" | "Cazenga" | "Sambizanga" | "Rangel" | "Hoji-ya-Henda" | "Camama" | "Kilamba" | "Talatona" | "Benfica" | "Zango" | "Panguila" | "Maianga" | "Samba" | "Belas",
       years: p.years,
       rateMin: p.rateMin,
       rateMax: p.rateMax,
@@ -75,9 +77,9 @@ function Oficio() {
         {workers.map((w) => (
           <WorkerCard key={w.id} worker={w} />
         ))}
-        {workers.length === 0 ? (
-          <p className="text-sm text-muted">Ninguém com esses filtros.</p>
-        ) : null}
+        {workers.length === 0 && (
+          <NoProfessionals onAction={() => navigate({ to: "/profissional/cadastrar" })} />
+        )}
       </div>
 
       <Button asChild className="w-full" size="lg">

@@ -15,6 +15,8 @@ import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as GuardadosRouteImport } from './routes/guardados'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PedirRouteImport } from './routes/pedir'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as AuthConfirmRouteImport } from './routes/auth/confirm'
 import { Route as OficiosIndexRouteImport } from './routes/oficios.index'
 import { Route as OficiosSlugRouteImport } from './routes/oficios.$slug'
 import { Route as PedidosIndexRouteImport } from './routes/pedidos.index'
@@ -54,6 +56,16 @@ const LoginRoute = LoginRouteImport.update({
 const PedirRoute = PedirRouteImport.update({
   id: '/pedir',
   path: '/pedir',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthConfirmRoute = AuthConfirmRouteImport.update({
+  id: '/auth/confirm',
+  path: '/auth/confirm',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OficiosIndexRoute = OficiosIndexRouteImport.update({
@@ -114,6 +126,8 @@ export interface FileRoutesByFullPath {
   '/guardados': typeof GuardadosRoute
   '/login': typeof LoginRoute
   '/pedir': typeof PedirRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/auth/confirm': typeof AuthConfirmRoute
   '/oficios/$slug': typeof OficiosSlugRoute
   '/pedidos/$id': typeof PedidosIdRoute
   '/profissionais/$id': typeof ProfissionaisIdRoute
@@ -132,6 +146,8 @@ export interface FileRoutesByTo {
   '/guardados': typeof GuardadosRoute
   '/login': typeof LoginRoute
   '/pedir': typeof PedirRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/auth/confirm': typeof AuthConfirmRoute
   '/oficios/$slug': typeof OficiosSlugRoute
   '/pedidos/$id': typeof PedidosIdRoute
   '/profissionais/$id': typeof ProfissionaisIdRoute
@@ -151,6 +167,8 @@ export interface FileRoutesById {
   '/guardados': typeof GuardadosRoute
   '/login': typeof LoginRoute
   '/pedir': typeof PedirRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/auth/confirm': typeof AuthConfirmRoute
   '/oficios/$slug': typeof OficiosSlugRoute
   '/pedidos/$id': typeof PedidosIdRoute
   '/profissionais/$id': typeof ProfissionaisIdRoute
@@ -171,6 +189,8 @@ export interface FileRouteTypes {
     | '/guardados'
     | '/login'
     | '/pedir'
+    | '/reset-password'
+    | '/auth/confirm'
     | '/oficios/$slug'
     | '/pedidos/$id'
     | '/profissionais/$id'
@@ -189,6 +209,8 @@ export interface FileRouteTypes {
     | '/guardados'
     | '/login'
     | '/pedir'
+    | '/reset-password'
+    | '/auth/confirm'
     | '/oficios/$slug'
     | '/pedidos/$id'
     | '/profissionais/$id'
@@ -207,6 +229,8 @@ export interface FileRouteTypes {
     | '/guardados'
     | '/login'
     | '/pedir'
+    | '/reset-password'
+    | '/auth/confirm'
     | '/oficios/$slug'
     | '/pedidos/$id'
     | '/profissionais/$id'
@@ -226,6 +250,8 @@ export interface RootRouteChildren {
   GuardadosRoute: typeof GuardadosRoute
   LoginRoute: typeof LoginRoute
   PedirRoute: typeof PedirRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
+  AuthConfirmRoute: typeof AuthConfirmRoute
   OficiosSlugRoute: typeof OficiosSlugRoute
   PedidosIdRoute: typeof PedidosIdRoute
   ProfissionaisIdRoute: typeof ProfissionaisIdRoute
@@ -280,6 +306,20 @@ declare module '@tanstack/react-router' {
       path: '/pedir'
       fullPath: '/pedir'
       preLoaderRoute: typeof PedirRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/confirm': {
+      id: '/auth/confirm'
+      path: '/auth/confirm'
+      fullPath: '/auth/confirm'
+      preLoaderRoute: typeof AuthConfirmRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/oficios/': {
@@ -362,6 +402,8 @@ const rootRouteChildren: RootRouteChildren = {
   GuardadosRoute: GuardadosRoute,
   LoginRoute: LoginRoute,
   PedirRoute: PedirRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
+  AuthConfirmRoute: AuthConfirmRoute,
   OficiosSlugRoute: OficiosSlugRoute,
   PedidosIdRoute: PedidosIdRoute,
   ProfissionaisIdRoute: ProfissionaisIdRoute,

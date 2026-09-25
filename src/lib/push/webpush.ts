@@ -10,11 +10,17 @@ if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 }
 
+interface WebPushSubscription {
+  endpoint: string;
+  keys: { p256dh: string; auth: string };
+  expirationTime?: number | null;
+}
+
 /**
  * Enviar notificação push para uma subscription
  */
 export async function sendPushNotification(
-  subscription: PushSubscription,
+  subscription: PushSubscription | WebPushSubscription,
   payload: {
     title: string;
     body: string;
@@ -32,12 +38,12 @@ export async function sendPushNotification(
   }
 
   try {
-    await webpush.sendNotification(subscription, JSON.stringify(payload));
+    await webpush.sendNotification(subscription as any, JSON.stringify(payload));
     return { success: true };
   } catch (error: any) {
     // 410/404 = subscription inválida/expirada
     if (error.statusCode === 410 || error.statusCode === 404) {
-      console.log('[webpush] Subscription expired:', subscription.endpoint);
+      console.log('[webpush] Subscription expired:', (subscription as any).endpoint);
       return { success: false, error: 'subscription_expired' };
     }
     console.error('[webpush] Send failed:', error);

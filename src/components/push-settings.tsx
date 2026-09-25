@@ -1,8 +1,17 @@
 import { Bell, BellOff, Loader2, Check, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePWA } from "@/hooks/usePWA";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { loadNotificationPrefs, saveNotificationPrefs } from "@/lib/notification-prefs";
+
+type NotificationPrefs = {
+  proposals: boolean;
+  messages: boolean;
+  jobUpdates: boolean;
+  reminders: boolean;
+  email: boolean;
+};
 
 interface PushSettingsProps {
   vapidPublicKey: string;
@@ -14,9 +23,27 @@ export function PushSettings({ vapidPublicKey, onSubscribed, onUnsubscribed }: P
   const { pushSubscription, notificationPermission, subscribeToPush, unsubscribeFromPush, requestNotificationPermission } = usePWA();
   const [isLoading, setIsLoading] = useState(false);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
+  const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
+  const [prefsLoading, setPrefsLoading] = useState(true);
 
   const isSubscribed = !!pushSubscription;
   const pushAvailable = Boolean(vapidPublicKey.trim());
+
+  // Carregar preferências do servidor
+  useEffect(() => {
+    const loadPrefs = async () => {
+      try {
+        const data = await loadNotificationPrefs();
+        setPrefs(data);
+      } catch (error) {
+        console.error('Failed to load notification preferences:', error);
+        setPrefs({ proposals: true, messages: true, jobUpdates: true, reminders: true, email: true });
+      } finally {
+        setPrefsLoading(false);
+      }
+    };
+    loadPrefs();
+  }, []);
 
   const handleSubscribe = async () => {
     if (!pushAvailable) return;
@@ -55,6 +82,19 @@ export function PushSettings({ vapidPublicKey, onSubscribed, onUnsubscribed }: P
     setShowPermissionDialog(false);
   };
 
+  const handlePrefChange = async (key: keyof NotificationPrefs, value: boolean) => {
+    if (!prefs) return;
+    const newPrefs = { ...prefs, [key]: value };
+    setPrefs(newPrefs);
+    try {
+      await saveNotificationPrefs(newPrefs);
+    } catch (error) {
+      console.error('Failed to update notification preference:', error);
+      // Revert on error
+      setPrefs(prefs);
+    }
+  };
+
   if (notificationPermission === 'denied' && !isSubscribed) {
     return (
       <div className="rounded-xl border border-border bg-surface p-5">
@@ -69,6 +109,19 @@ export function PushSettings({ vapidPublicKey, onSubscribed, onUnsubscribed }: P
           <Button variant="outline" size="sm" onClick={handlePermissionClick}>
             Abrir configurações
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (prefsLoading) {
+    return (
+      <div className="rounded-xl border border-border bg-surface p-5">
+        <div className="flex items-center gap-3">
+          <Loader2 className="size-6 text-muted animate-spin" strokeWidth={2} />
+          <div className="flex-1">
+            <p className="font-medium">A carregar preferências...</p>
+          </div>
         </div>
       </div>
     );
@@ -125,27 +178,31 @@ export function PushSettings({ vapidPublicKey, onSubscribed, onUnsubscribed }: P
         </p>
       ) : null}
 
-      {isSubscribed && (
+      {isSubscribed && prefs && (
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
           <NotificationToggle
             title="Novas propostas"
             description="Quando um profissional enviar orçamento"
-            enabled={true}
+            enabled={prefs.proposals}
+            onChange={(v) => handlePrefChange('proposals', v)}
           />
           <NotificationToggle
             title="Mensagens no chat"
             description="Novas respostas dos profissionais"
-            enabled={true}
+            enabled={prefs.messages}
+            onChange={(v) => handlePrefChange('messages', v)}
           />
           <NotificationToggle
             title="Status do pedido"
             description="Quando o pedido for aceito ou concluído"
-            enabled={true}
+            enabled={prefs.jobUpdates}
+            onChange={(v) => handlePrefChange('jobUpdates', v)}
           />
           <NotificationToggle
             title="Lembretes"
             description="Pedidos sem resposta após 24h"
-            enabled={true}
+            enabled={prefs.reminders}
+            onChange={(v) => handlePrefChange('reminders', v)}
           />
         </div>
       )}
@@ -153,10 +210,10 @@ export function PushSettings({ vapidPublicKey, onSubscribed, onUnsubscribed }: P
   );
 }
 
-function NotificationToggle({ title, description, enabled }: { title: string; description: string; enabled: boolean }) {
+function NotificationToggle({ title, description, enabled, onChange }: { title: string; description: string; enabled: boolean; onChange?: (enabled: boolean) => void }) {
   return (
     <label className="flex items-center gap-3 rounded-lg border border-border bg-bg p-3 cursor-pointer">
-      <input type="checkbox" defaultChecked={enabled} className="sr-only" />
+      <input type="checkbox" checked={enabled} onChange={(e) => onChange?.(e.target.checked)} className="sr-only" />
       <div className="h-5 w-5 flex items-center justify-center rounded border-2 border-border">
         {enabled && <Check className="size-3 text-primary" strokeWidth={3} />}
       </div>
@@ -173,6 +230,36 @@ export function PushSettingsPage({ vapidPublicKey }: { vapidPublicKey: string })
   const { pushSubscription, notificationPermission, subscribeToPush, unsubscribeFromPush, requestNotificationPermission } = usePWA();
   const [isLoading, setIsLoading] = useState(false);
   const pushAvailable = Boolean(vapidPublicKey.trim());
+  const [pagePrefs, setPagePrefs] = useState<NotificationPrefs | null>(null);
+  const [pagePrefsLoading, setPagePrefsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadPrefs = async () => {
+      try {
+        const data = await loadNotificationPrefs();
+        setPagePrefs(data);
+      } catch (error) {
+        console.error('Failed to load notification preferences:', error);
+        setPagePrefs({ proposals: true, messages: true, jobUpdates: true, reminders: true, email: true });
+      } finally {
+        setPagePrefsLoading(false);
+      }
+    };
+    loadPrefs();
+  }, []);
+
+  const handlePagePrefChange = async (key: keyof NotificationPrefs, value: boolean) => {
+    if (!pagePrefs) return;
+    const newPrefs = { ...pagePrefs, [key]: value };
+    setPagePrefs(newPrefs);
+    try {
+      await saveNotificationPrefs(newPrefs);
+    } catch (error) {
+      console.error('Failed to update notification preference:', error);
+      // Revert on error
+      setPagePrefs(pagePrefs);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -228,36 +315,47 @@ export function PushSettingsPage({ vapidPublicKey }: { vapidPublicKey: string })
         <PushSettings vapidPublicKey={vapidPublicKey} />
       </section>
 
-      <section className="space-y-4">
-        <h2 className="font-display text-lg font-semibold">Tipos de notificação</h2>
-        <div className="rounded-xl border border-border bg-surface p-5 space-y-3">
-          <NotificationToggle
-            title="Novas propostas"
-            description="Quando um profissional enviar orçamento para seu pedido"
-            enabled={true}
-          />
-          <NotificationToggle
-            title="Respostas no chat"
-            description="Mensagens de profissionais nas suas conversas"
-            enabled={true}
-          />
-          <NotificationToggle
-            title="Pedido aceito/concluído"
-            description="Atualizações de status dos seus pedidos"
-            enabled={true}
-          />
-          <NotificationToggle
-            title="Lembretes de pedidos"
-            description="Pedidos sem resposta após 24 horas"
-            enabled={true}
-          />
-          <NotificationToggle
-            title="Promoções e novidades"
-            description="Ofertas especiais e novos recursos (opcional)"
-            enabled={false}
-          />
+      {pagePrefsLoading ? (
+        <div className="rounded-xl border border-border bg-surface p-5">
+          <Loader2 className="size-6 text-muted animate-spin mx-auto" strokeWidth={2} />
         </div>
-      </section>
+      ) : pagePrefs && (
+        <section className="space-y-4">
+          <h2 className="font-display text-lg font-semibold">Tipos de notificação</h2>
+          <div className="rounded-xl border border-border bg-surface p-5 space-y-3">
+            <NotificationToggle
+              title="Novas propostas"
+              description="Quando um profissional enviar orçamento para seu pedido"
+              enabled={pagePrefs.proposals}
+              onChange={(v) => handlePagePrefChange('proposals', v)}
+            />
+            <NotificationToggle
+              title="Respostas no chat"
+              description="Mensagens de profissionais nas suas conversas"
+              enabled={pagePrefs.messages}
+              onChange={(v) => handlePagePrefChange('messages', v)}
+            />
+            <NotificationToggle
+              title="Pedido aceito/concluído"
+              description="Atualizações de status dos seus pedidos"
+              enabled={pagePrefs.jobUpdates}
+              onChange={(v) => handlePagePrefChange('jobUpdates', v)}
+            />
+            <NotificationToggle
+              title="Lembretes de pedidos"
+              description="Pedidos sem resposta após 24 horas"
+              enabled={pagePrefs.reminders}
+              onChange={(v) => handlePagePrefChange('reminders', v)}
+            />
+            <NotificationToggle
+              title="Promoções e novidades"
+              description="Ofertas especiais e novos recursos (opcional)"
+              enabled={pagePrefs.email}
+              onChange={(v) => handlePagePrefChange('email', v)}
+            />
+          </div>
+        </section>
+      )}
 
       {pushSubscription && (
         <section className="space-y-4">

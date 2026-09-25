@@ -3,13 +3,13 @@ import { useState, type FormEvent } from "react";
 import { CheckCircle2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { CATEGORIES, NEIGHBORHOODS } from "@/lib/catalog";
-import { getOwnedProfessional, registerProfessional, updateOwnedProfessional } from "@/lib/account-workflows";
+import { getOwnedProfessionalOptional, registerProfessional, updateOwnedProfessional } from "@/lib/account-workflows";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-export const Route = createFileRoute("/profissional/cadastrar")({ loader: () => getOwnedProfessional(), component: PerfilProfissional });
+export const Route = createFileRoute("/profissional/cadastrar")({ loader: () => getOwnedProfessionalOptional(), component: PerfilProfissional });
 function PerfilProfissional() {
   const existing = Route.useLoaderData(); const navigate = useNavigate(); const [busy, setBusy] = useState(false); const [editing, setEditing] = useState(!existing); const [name, setName] = useState(existing?.name ?? ""); const [bio, setBio] = useState(existing?.bio ?? ""); const [whatsapp, setWhatsapp] = useState(existing?.whatsapp ?? ""); const [category, setCategory] = useState(existing?.category ?? CATEGORIES[0].slug); const [neighborhood, setNeighborhood] = useState<string>(existing?.neighborhood ?? NEIGHBORHOODS[0]); const [min, setMin] = useState(existing?.rate_min.toString() ?? ""); const [max, setMax] = useState(existing?.rate_max.toString() ?? ""); const [skills, setSkills] = useState(existing?.skills.join(", ") ?? ""); const [availableToday, setAvailableToday] = useState(existing?.available_today ?? false);
   async function submit(event: FormEvent) { event.preventDefault(); setBusy(true); const data = { name, category, neighborhood, bio, whatsapp, rateMin: Number(min), rateMax: Number(max), skills: skills.split(",").map((item) => item.trim()).filter(Boolean) }; try { const result = existing ? await updateOwnedProfessional({ data: { ...data, availableToday } }) : await registerProfessional({ data }); toast.success(existing ? "Perfil profissional atualizado." : "Perfil profissional criado."); setEditing(false); await navigate({ to: "/profissionais/$id", params: { id: result.id } }); } catch (error) { toast.error(error instanceof Error ? error.message : "Não foi possível guardar o perfil."); } finally { setBusy(false); } }

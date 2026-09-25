@@ -2,7 +2,7 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useMemo, useState, type FormEvent } from "react";
 import { CheckCircle2, Clock3, MessageCircle, Pencil, Send, Star, X } from "lucide-react";
 import { toast } from "sonner";
-import { acceptJobProposal, addJobMessage, getParticipantJob, reviewCompletedJob, updateMyJob, updateMyJobStatus } from "@/lib/jobs";
+import { acceptJobProposal, addJobMessage, getParticipantJobOptional, reviewCompletedJob, updateMyJob, updateMyJobStatus } from "@/lib/jobs";
 import { getCategory, urgencyLabel } from "@/lib/catalog";
 import { formatKz, relativeTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { WorkerAvatar } from "@/components/worker-avatar";
 
-export const Route = createFileRoute("/pedidos/$id")({ loader: ({ params }) => getParticipantJob({ data: { id: params.id } }), component: Pedido });
+export const Route = createFileRoute("/pedidos/$id")({ loader: ({ params }) => getParticipantJobOptional({ data: { id: params.id } }), component: Pedido });
 const stateLabel = { aberto: "Aberto", aceite: "Profissional escolhido", concluido: "Concluído", cancelado: "Cancelado" } as const;
 
 function Pedido() {

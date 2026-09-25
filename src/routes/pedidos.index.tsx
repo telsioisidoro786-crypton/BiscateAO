@@ -1,15 +1,17 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { getCategory, urgencyLabel } from "@/lib/catalog";
-import { listMyJobs } from "@/lib/jobs";
+import { listMyJobsOptional } from "@/lib/jobs";
 import { formatKz, relativeTime } from "@/lib/utils";
+import { NoJobs } from "@/components/empty-state";
 
 export const Route = createFileRoute("/pedidos/")({
-  loader: () => listMyJobs(),
+  loader: () => listMyJobsOptional(),
   component: Pedidos,
 });
 
 function Pedidos() {
   const jobs = Route.useLoaderData();
+  const navigate = useNavigate();
   return (
     <div className="space-y-5">
       <header>
@@ -31,7 +33,9 @@ function Pedidos() {
             </Link>
           );
         })}
-        {jobs.length === 0 ? <p className="rounded-xl bg-surface p-5 text-sm text-muted">Ainda não tens pedidos. <Link to="/pedir" className="font-medium text-primary">Publicar um pedido</Link>.</p> : null}
+        {jobs.length === 0 && (
+          <NoJobs onAction={() => navigate({ to: "/pedir" })} />
+        )}
       </div>
     </div>
   );

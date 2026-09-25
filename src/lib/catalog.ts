@@ -173,7 +173,7 @@ function toWorker(prof: import("@/lib/professionals").Professional): Worker {
     bio: prof.bio,
     skills: prof.skills,
     responseMins: prof.responseMins,
-    reviews: prof.reviews?.map((r) => ({
+    reviews: (prof as any).reviews?.map((r: any) => ({
       author: r.author,
       neighborhood: r.neighborhood as Neighborhood,
       rating: r.rating,
