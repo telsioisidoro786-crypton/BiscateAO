@@ -38,3 +38,5 @@ coverage/
 *.pem
 .vercel
 .turbo
+.vercel
+.env*
