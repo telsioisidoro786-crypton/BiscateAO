@@ -27,6 +27,9 @@ import { Route as ProfissionalPedidosRouteImport } from './routes/profissional.p
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiPushSubscribeRouteImport } from './routes/api/push/subscribe'
 import { Route as ApiPushUnsubscribeRouteImport } from './routes/api/push/unsubscribe'
+import { Route as ApiUploadAvatarRouteImport } from './routes/api/upload/avatar'
+import { Route as ApiUploadDeleteRouteImport } from './routes/api/upload/delete'
+import { Route as ApiUploadPortfolioRouteImport } from './routes/api/upload/portfolio'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -118,6 +121,21 @@ const ApiPushUnsubscribeRoute = ApiPushUnsubscribeRouteImport.update({
   path: '/api/push/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiUploadAvatarRoute = ApiUploadAvatarRouteImport.update({
+  id: '/api/upload/avatar',
+  path: '/api/upload/avatar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiUploadDeleteRoute = ApiUploadDeleteRouteImport.update({
+  id: '/api/upload/delete',
+  path: '/api/upload/delete',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiUploadPortfolioRoute = ApiUploadPortfolioRouteImport.update({
+  id: '/api/upload/portfolio',
+  path: '/api/upload/portfolio',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -138,6 +156,9 @@ export interface FileRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/push/subscribe': typeof ApiPushSubscribeRoute
   '/api/push/unsubscribe': typeof ApiPushUnsubscribeRoute
+  '/api/upload/avatar': typeof ApiUploadAvatarRoute
+  '/api/upload/delete': typeof ApiUploadDeleteRoute
+  '/api/upload/portfolio': typeof ApiUploadPortfolioRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -158,6 +179,9 @@ export interface FileRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/push/subscribe': typeof ApiPushSubscribeRoute
   '/api/push/unsubscribe': typeof ApiPushUnsubscribeRoute
+  '/api/upload/avatar': typeof ApiUploadAvatarRoute
+  '/api/upload/delete': typeof ApiUploadDeleteRoute
+  '/api/upload/portfolio': typeof ApiUploadPortfolioRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -179,6 +203,9 @@ export interface FileRoutesById {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/push/subscribe': typeof ApiPushSubscribeRoute
   '/api/push/unsubscribe': typeof ApiPushUnsubscribeRoute
+  '/api/upload/avatar': typeof ApiUploadAvatarRoute
+  '/api/upload/delete': typeof ApiUploadDeleteRoute
+  '/api/upload/portfolio': typeof ApiUploadPortfolioRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -201,6 +228,9 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/push/subscribe'
     | '/api/push/unsubscribe'
+    | '/api/upload/avatar'
+    | '/api/upload/delete'
+    | '/api/upload/portfolio'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -221,6 +251,9 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/push/subscribe'
     | '/api/push/unsubscribe'
+    | '/api/upload/avatar'
+    | '/api/upload/delete'
+    | '/api/upload/portfolio'
   id:
     | '__root__'
     | '/'
@@ -241,6 +274,9 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/push/subscribe'
     | '/api/push/unsubscribe'
+    | '/api/upload/avatar'
+    | '/api/upload/delete'
+    | '/api/upload/portfolio'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -262,6 +298,9 @@ export interface RootRouteChildren {
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiPushSubscribeRoute: typeof ApiPushSubscribeRoute
   ApiPushUnsubscribeRoute: typeof ApiPushUnsubscribeRoute
+  ApiUploadAvatarRoute: typeof ApiUploadAvatarRoute
+  ApiUploadDeleteRoute: typeof ApiUploadDeleteRoute
+  ApiUploadPortfolioRoute: typeof ApiUploadPortfolioRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -392,6 +431,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPushUnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/upload/avatar': {
+      id: '/api/upload/avatar'
+      path: '/api/upload/avatar'
+      fullPath: '/api/upload/avatar'
+      preLoaderRoute: typeof ApiUploadAvatarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/upload/delete': {
+      id: '/api/upload/delete'
+      path: '/api/upload/delete'
+      fullPath: '/api/upload/delete'
+      preLoaderRoute: typeof ApiUploadDeleteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/upload/portfolio': {
+      id: '/api/upload/portfolio'
+      path: '/api/upload/portfolio'
+      fullPath: '/api/upload/portfolio'
+      preLoaderRoute: typeof ApiUploadPortfolioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -414,6 +474,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiPushSubscribeRoute: ApiPushSubscribeRoute,
   ApiPushUnsubscribeRoute: ApiPushUnsubscribeRoute,
+  ApiUploadAvatarRoute: ApiUploadAvatarRoute,
+  ApiUploadDeleteRoute: ApiUploadDeleteRoute,
+  ApiUploadPortfolioRoute: ApiUploadPortfolioRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

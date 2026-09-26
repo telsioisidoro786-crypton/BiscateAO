@@ -1,84 +1,60 @@
-import { createClient } from '@supabase/supabase-js';
+"use client";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// Client-side storage functions using API routes (fetch)
+// Server functions with File validators don't work with TanStack Start RPC
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-const BUCKET_NAME = 'BiscateAO';
+import { validateImageFile } from '@/lib/validation';
 
 export type UploadResult = {
   url: string;
   path: string;
 } | { error: string };
 
-export async function uploadAvatar(
-  file: File,
-  userId: string
-): Promise<UploadResult> {
-  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-  const fileName = `avatars/${userId}-${Date.now()}.${ext}`;
+export { validateImageFile };
 
-  const { data, error } = await supabase.storage
-    .from(BUCKET_NAME)
-    .upload(fileName, file, {
-      cacheControl: '3600',
-      upsert: true,
-    });
+const API_BASE = '/api/upload';
 
-  if (error) return { error: error.message };
+async function uploadFile(endpoint: string, file: File, entityId: string): Promise<UploadResult> {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('entityId', entityId);
 
-  const { data: { publicUrl } } = supabase.storage
-    .from(BUCKET_NAME)
-    .getPublicUrl(data.path);
+  const response = await fetch(`${API_BASE}/${endpoint}`, {
+    method: 'POST',
+    body: formData,
+  });
 
-  return { url: publicUrl, path: data.path };
+  const data = await response.json();
+
+  if (!response.ok) {
+    return { error: data.error || 'Erro no upload' };
+  }
+
+  return { url: data.url, path: data.path };
 }
 
-export async function uploadPortfolioImage(
-  file: File,
-  professionalId: string
-): Promise<UploadResult> {
-  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-  const fileName = `portfolio/${professionalId}-${Date.now()}.${ext}`;
-
-  const { data, error } = await supabase.storage
-    .from(BUCKET_NAME)
-    .upload(fileName, file, {
-      cacheControl: '3600',
-      upsert: true,
-    });
-
-  if (error) return { error: error.message };
-
-  const { data: { publicUrl } } = supabase.storage
-    .from(BUCKET_NAME)
-    .getPublicUrl(data.path);
-
-  return { url: publicUrl, path: data.path };
+export async function uploadAvatar(input: { file: File; entityId: string }): Promise<UploadResult> {
+  return uploadFile('avatar', input.file, input.entityId);
 }
 
-export async function deleteFile(path: string): Promise<{ error?: string }> {
-  const { error } = await supabase.storage
-    .from(BUCKET_NAME)
-    .remove([path]);
+export async function uploadPortfolioImage(input: { file: File; entityId: string }): Promise<UploadResult> {
+  return uploadFile('portfolio', input.file, input.entityId);
+}
 
-  if (error) return { error: error.message };
+export async function deleteFile(input: { path: string }): Promise<{ error?: string }> {
+  const formData = new FormData();
+  formData.append('path', input.path);
+
+  const response = await fetch(`${API_BASE}/delete`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    return { error: data.error || 'Erro ao deletar' };
+  }
+
   return {};
-}
-
-export function getPublicUrl(path: string): string {
-  const { data } = supabase.storage.from(BUCKET_NAME).getPublicUrl(path);
-  return data.publicUrl;
-}
-
-export function validateImageFile(file: File): { valid: boolean; error?: string } {
-  const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-  if (!validTypes.includes(file.type)) {
-    return { valid: false, error: 'Formato inválido. Use JPEG, PNG, WebP ou GIF.' };
-  }
-  if (file.size > 50 * 1024 * 1024) {
-    return { valid: false, error: 'Arquivo muito grande. Máximo 50MB.' };
-  }
-  return { valid: true };
 }

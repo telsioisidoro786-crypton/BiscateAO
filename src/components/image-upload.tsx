@@ -4,7 +4,7 @@ import { useState, useCallback, useRef } from 'react';
 import { Image, Upload, X, Loader2, Trash2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { uploadAvatar, uploadPortfolioImage, deleteFile, type UploadResult } from '@/lib/storage.client';
+import { uploadAvatar, uploadPortfolioImage, deleteFile, type UploadResult } from '@/lib/storage';
 import { validateImageFile } from '@/lib/validation';
 import { toast } from "sonner";
 
