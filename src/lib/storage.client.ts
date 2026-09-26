@@ -15,6 +15,7 @@ export { validateImageFile };
 
 // These functions will be replaced by the server function RPC calls at build time
 // They must have the same input/output types as the server functions
+// BUILD_ID: 2026-09-26-0330
 export async function uploadAvatar(input: { file: File; entityId: string }): Promise<UploadResult> {
   // This will be replaced by the server function call at build time
   throw new Error('Not implemented on client - should be replaced by RPC');
