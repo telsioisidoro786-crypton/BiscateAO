@@ -4,7 +4,7 @@ import { useState, useCallback, useRef } from 'react';
 import { Image, Upload, X, Loader2, Trash2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { uploadAvatar, uploadPortfolioImage, deleteFile, type UploadResult } from '@/lib/storage.server';
+import { uploadAvatar, uploadPortfolioImage, deleteFile, type UploadResult } from '@/lib/storage.client';
 import { validateImageFile } from '@/lib/validation';
 import { toast } from "sonner";
 
@@ -90,9 +90,9 @@ export function ImageUpload({
     try {
       let result: UploadResult;
       if (type === 'avatar') {
-        result = await uploadAvatar({ data: { file, entityId } });
+        result = await uploadAvatar({ file, entityId });
       } else {
-        result = await uploadPortfolioImage({ data: { file, entityId } });
+        result = await uploadPortfolioImage({ file, entityId });
       }
 
       if ('error' in result) throw new Error(result.error);
@@ -127,7 +127,7 @@ export function ImageUpload({
 
   const removeImage = useCallback(async (index: number, path?: string) => {
     if (path) {
-      await deleteFile({ data: { path } });
+      await deleteFile({ path });
     }
     if (multiple) {
       setPreviews(prev => prev.filter((_, i) => i !== index));
