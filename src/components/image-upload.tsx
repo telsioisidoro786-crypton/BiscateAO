@@ -4,7 +4,8 @@ import { useState, useCallback, useRef } from 'react';
 import { Image, Upload, X, Loader2, Trash2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { uploadAvatar, uploadPortfolioImage, deleteFile, validateImageFile, type UploadResult } from '@/lib/storage.server';
+import { uploadAvatar, uploadPortfolioImage, deleteFile, type UploadResult } from '@/lib/storage.client';
+import { validateImageFile } from '@/lib/validation';
 import { toast } from "sonner";
 
 interface ImageUploadProps {

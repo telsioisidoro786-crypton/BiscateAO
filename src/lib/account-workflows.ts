@@ -128,3 +128,25 @@ export const registerProfessional = createServerFn({ method: "POST" })
     await sql`insert into professionals (id, owner_user_id, name, category, neighborhood, years, rate_min, rate_max, rating, jobs_count, available_today, bio, skills, response_mins, whatsapp, verified, profile_status) values (${professionalId}, ${context.userId}, ${data.name}, ${data.category}, ${data.neighborhood}, 0, ${data.rateMin}, ${data.rateMax}, 0, 0, false, ${data.bio}, ${data.skills}, 60, ${data.whatsapp}, false, 'ativo')`;
     return { id: professionalId };
   });
+
+// Email verification server function
+export const verifyEmail = createServerFn({ method: "POST" })
+  .validator(z.object({ token: z.string() }))
+  .handler(async ({ data }) => {
+    const { auth } = await import("@/lib/auth/server");
+    // Use type assertion to bypass TypeScript overload resolution issues
+    const result = await (auth.api as any).verifyEmail({
+      body: { token: data.token },
+      asResponse: true,
+    });
+    
+    if (result instanceof Response) {
+      return result.ok ? { success: true } : { success: false, error: 'Invalid token' };
+    }
+    
+    if (result && typeof result === 'object' && 'ok' in result) {
+      return (result as { ok: boolean }).ok ? { success: true } : { success: false, error: 'Invalid token' };
+    }
+    
+    return { success: false, error: 'Invalid token' };
+  });

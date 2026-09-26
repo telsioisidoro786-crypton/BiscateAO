@@ -4,6 +4,7 @@ import { Loader2, CheckCircle, AlertCircle, Mail } from "lucide-react";
 import { authClient } from "@/lib/auth/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { verifyEmail } from "@/lib/account-workflows";
 
 export const Route = createFileRoute("/auth/confirm")({
   component: ConfirmEmail,
@@ -30,9 +31,9 @@ function ConfirmEmail() {
           return;
         }
 
-        // Email verification
-        const { data, error } = await authClient.verifyEmail({ token: token || "" });
-        if (error) throw new Error(error.message);
+        // Email verification via server function
+        const result = await verifyEmail({ data: { token: token || "" } });
+        if (!result.success) throw new Error(result.error || "Erro na verificação");
         
         setStatus("success");
         setMessage("Email verificado com sucesso! Bem-vindo ao BiscateAO.");
