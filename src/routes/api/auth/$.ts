@@ -14,8 +14,23 @@ import { getAuth } from "@/lib/auth/server";
 export const Route = createFileRoute("/api/auth/$")({
   server: {
     handlers: {
-      GET: ({ request }) => getAuth().handler(request),
-      POST: ({ request }) => getAuth().handler(request),
+      GET: ({ request, params }) => {
+        // Ensure the full path is available for Better Auth routing
+        const url = new URL(request.url);
+        // The $ param contains the rest of the path
+        const authPath = params.$ || "";
+        // Reconstruct the full path for Better Auth
+        url.pathname = `/api/auth/${authPath}`;
+        const newRequest = new Request(url.toString(), request);
+        return getAuth().handler(newRequest);
+      },
+      POST: ({ request, params }) => {
+        const url = new URL(request.url);
+        const authPath = params.$ || "";
+        url.pathname = `/api/auth/${authPath}`;
+        const newRequest = new Request(url.toString(), request);
+        return getAuth().handler(newRequest);
+      },
     },
   },
 });
