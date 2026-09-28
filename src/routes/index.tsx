@@ -273,3 +273,5 @@ function Home() {
     </div>
   );
 }
+/ /   t r i g g e r   r o u t e   r e g e n e r a t i o n  
+ 
