@@ -63,7 +63,7 @@ function ResetPassword() {
     setIsLoading(true);
     try {
       const { authClient } = await import("@/lib/auth/client");
-      const { error } = await (authClient as any).forgetPassword({
+      const { error } = await authClient.forgotPassword({
         email,
         redirectTo: `${window.location.origin}/reset-password`,
       });
@@ -108,7 +108,7 @@ function ResetPassword() {
     setIsLoading(true);
     try {
       const { authClient } = await import("@/lib/auth/client");
-      const { error } = await (authClient as any).forgetPassword({
+      const { error } = await authClient.forgotPassword({
         email,
         redirectTo: `${window.location.origin}/reset-password`,
       });
