@@ -1,9 +1,11 @@
-import { createServerFileRoute } from "@tanstack/react-start/server";
+import { createFileRoute } from "@tanstack/react-router";
 import { getAuth } from "@/lib/auth/server";
 
-export const ServerRoute = createServerFileRoute("/api/auth/callback/google").methods({
-  GET: async ({ request }) => {
-    const auth = getAuth();
-    return auth.handler(request);
-  },
+export const Route = createFileRoute("/api/auth/callback/google")({
+  server: { handlers: {
+    GET: async ({ request }) => {
+      const auth = getAuth();
+      return auth.handler(request);
+    },
+  } },
 });
