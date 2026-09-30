@@ -5,7 +5,7 @@ import { getAuth } from "@/lib/auth/server";
  * Catch-all API route for Better Auth at `/api/auth/*`.
  * Uses createFileRoute with server handlers so it gets included in route tree.
  */
-export const Route = createFileRoute("/api/auth/$rest")({
+export const Route = createFileRoute("/api/auth/$rest_new")({
   server: { handlers: {
     GET: async ({ request, params }) => {
       const auth = getAuth();
