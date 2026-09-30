@@ -1,22 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, Mail, Lock, Eye, EyeOff, UserPlus, RotateCcw, Github } from "lucide-react";
-import { signIn, signUpEmail, authEnabled } from "@/lib/auth/client";
+import { signIn, signUpEmail, authEnabled, authClient } from "@/lib/auth/client";
 import { useBiscate } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-
-// Firebase configuration for BiscateAO
-const firebaseConfig = {
-  apiKey: "AIzaSyAqheSQl2-_rz0vPnSI0Q8yzpL1mi-K-18",
-  authDomain: "biscateao-37a40.firebaseapp.com",
-  projectId: "biscateao-37a40",
-  storageBucket: "biscateao-37a40.firebasestorage.app",
-  messagingSenderId: "137635267185",
-  appId: "1:137635267185:web:5bc239d7b935f15cc5d1d0"
-};
 
 export const Route = createFileRoute("/login")({
   component: Login,
@@ -32,113 +22,42 @@ function Login() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [showPassword, setShowPassword] = useState(false);
   const setNeighborhood = useBiscate((s) => s.setNeighborhood);
-  const btnGoogleRef = useRef<HTMLButtonElement>(null);
-  const btnGithubRef = useRef<HTMLButtonElement>(null);
 
   // Check if we're in a live preview iframe
   const inLivePreview = typeof window !== "undefined" &&
     window.location.hostname.endsWith(".grok-sandbox.com");
 
-  // Initialize Firebase and set up event listeners
+  // Check if user is already logged in (Better Auth session)
   useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const initFirebase = async () => {
+    const checkSession = async () => {
       try {
-        // @ts-ignore - Firebase loaded via CDN
-        const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
-        // @ts-ignore - Firebase loaded via CDN
-        const { getAuth, signInWithPopup, GoogleAuthProvider, GithubAuthProvider, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
-        // @ts-ignore - Firebase loaded via CDN
-        const { getFirestore, doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-
-        // Firebase configuration
-        const firebaseConfig = {
-          apiKey: "AIzaSyAqheSQl2-_rz0vPnSI0Q8yzpL1mi-K-18",
-          authDomain: "biscateao-37a40.firebaseapp.com",
-          projectId: "biscateao-37a40",
-          storageBucket: "biscateao-37a40.firebasestorage.app",
-          messagingSenderId: "137635267185",
-          appId: "1:137635267185:web:5bc239d7b935f15cc5d1d0"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        // Listen for auth state changes
-        onAuthStateChanged(auth, (user: any) => {
-          if (user) {
-            console.log("Utilizador conectado:", user.email);
-            if (window.location.pathname === '/login') {
-              window.location.href = "/";
-            }
-          }
-        });
-
-        // Google Sign In
-        if (btnGoogleRef.current) {
-          btnGoogleRef.current.addEventListener('click', async () => {
-            const provider = new GoogleAuthProvider();
-            try {
-              const result = await signInWithPopup(auth, provider);
-              const user = result.user;
-
-              await setDoc(doc(db, "usuarios", user.uid), {
-                uid: user.uid,
-                nome: user.displayName,
-                email: user.email,
-                foto: user.photoURL,
-                provedor: 'google',
-                atualizadoEm: new Date().toISOString()
-              }, { merge: true });
-
-              window.location.href = "/";
-            } catch (error: any) {
-              console.error("Erro no Google Auth:", error);
-              alert("Falha no login com Google: " + error.message);
-            }
-          });
-        }
-
-        // GitHub Sign In
-        if (btnGithubRef.current) {
-          btnGithubRef.current.addEventListener('click', async () => {
-            const provider = new GithubAuthProvider();
-            try {
-              const result = await signInWithPopup(auth, provider);
-              const user = result.user;
-
-              await setDoc(doc(db, "usuarios", user.uid), {
-                uid: user.uid,
-                nome: user.displayName || user.reloadUserInfo?.screenName,
-                email: user.email,
-                foto: user.photoURL,
-                provedor: 'github',
-                atualizadoEm: new Date().toISOString()
-              }, { merge: true });
-
-              window.location.href = "/";
-            } catch (error: any) {
-              console.error("Erro no GitHub Auth:", error);
-              alert("Falha no login com GitHub: " + error.message);
-            }
-          });
+        const { data: session } = await authClient.getSession();
+        if (session?.user && window.location.pathname === '/login') {
+          window.location.href = "/";
         }
       } catch (error) {
-        console.error("Firebase init error:", error);
+        // No session, stay on login page
       }
     };
-
-    initFirebase().catch(console.error);
+    checkSession();
   }, []);
+
+  const handleOAuthSignIn = async (providerId: "google" | "github") => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await signIn(providerId, { callbackURL: "/" });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao entrar");
+      setIsLoading(false);
+    }
+  };
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
     try {
-      const { authClient } = await import("@/lib/auth/client");
       const { error } = await authClient.signIn.email({
         email,
         password,
@@ -212,17 +131,17 @@ function Login() {
         </div>
       )}
 
-      {/* Provedores OAuth - Botões Estáticos com Firebase */}
+      {/* Provedores OAuth - Botões Estáticos com Better Auth */}
       <section className="space-y-3">
         <p className="text-xs font-medium uppercase tracking-wide text-muted">
           Entrar com
         </p>
         <div className="grid gap-2 sm:grid-cols-2">
           <Button
-            ref={btnGoogleRef}
             type="button"
             variant="outline"
             disabled={isLoading}
+            onClick={() => handleOAuthSignIn("google")}
             className="w-full justify-center gap-2"
           >
             <svg className="size-5" viewBox="0 0 24 24">
@@ -247,10 +166,10 @@ function Login() {
           </Button>
 
           <Button
-            ref={btnGithubRef}
             type="button"
             variant="outline"
             disabled={isLoading}
+            onClick={() => handleOAuthSignIn("github")}
             className="w-full justify-center gap-2"
           >
             <Github className="size-5" />
@@ -313,7 +232,7 @@ function Login() {
             </Link>
           </div>
           <div className="relative">
-            <Lock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate_y-1/2 text-muted" />
+            <Lock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
