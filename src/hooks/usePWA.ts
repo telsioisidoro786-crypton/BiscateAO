@@ -12,6 +12,7 @@ export function usePWA() {
   const [pushSubscription, setPushSubscription] = useState<PushSubscription | null>(null);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+  const [vapidConfigured, setVapidConfigured] = useState(false);
 
   // Registrar Service Worker
   useEffect(() => {
@@ -48,7 +49,6 @@ export function usePWA() {
           const subscription = await registration.pushManager.getSubscription();
           if (subscription) setPushSubscription(subscription);
         }
-
       } catch (error) {
         console.error('[PWA] SW registration failed:', error);
       }
@@ -140,6 +140,22 @@ export function usePWA() {
     }
   }, [pushSubscription]);
 
+  // Verificar se VAPID está configurado
+  useEffect(() => {
+    const checkVapid = async () => {
+      try {
+        const response = await fetch('/api/push/vapid-status');
+        if (response.ok) {
+          const data = await response.json();
+          setVapidConfigured(data.configured);
+        }
+      } catch (error) {
+        console.warn('[PWA] Could not check VAPID status:', error);
+      }
+    };
+    checkVapid();
+  }, []);
+
   // Instalar PWA
   const install = useCallback(async () => {
     if (!installPrompt) return false;
@@ -190,6 +206,7 @@ export function usePWA() {
     pushSubscription,
     notificationPermission,
     isOnline,
+    vapidConfigured,
     requestNotificationPermission,
     subscribeToPush,
     unsubscribeFromPush,

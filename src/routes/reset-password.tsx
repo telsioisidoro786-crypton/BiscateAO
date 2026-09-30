@@ -1,13 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { Loader2, Mail, Lock, Eye, EyeOff, RotateCcw, AlertCircle, CheckCircle } from "lucide-react";
-import { signOut, authEnabled } from "@/lib/auth/client";
+import { signOut, authEnabled, forgotPassword } from "@/lib/auth/client";
 import { useBiscate } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { authClient } from "@/lib/auth/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/reset-password")({
@@ -62,12 +61,8 @@ function ResetPassword() {
     setError(null);
     setIsLoading(true);
     try {
-      const { authClient } = await import("@/lib/auth/client");
-      const { error } = await authClient.forgotPassword({
-        email,
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-      if (error) throw new Error(error.message);
+      const { error } = await forgotPassword(email, `${window.location.origin}/reset-password`);
+      if (error) throw new Error(error);
       setStep("success");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao enviar email");
@@ -107,12 +102,8 @@ function ResetPassword() {
     setError(null);
     setIsLoading(true);
     try {
-      const { authClient } = await import("@/lib/auth/client");
-      const { error } = await authClient.forgotPassword({
-        email,
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-      if (error) throw new Error(error.message);
+      const { error } = await forgotPassword(email, `${window.location.origin}/reset-password`);
+      if (error) throw new Error(error);
       toast.success("Email reenviado");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao reenviar");

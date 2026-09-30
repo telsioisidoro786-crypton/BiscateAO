@@ -64,4 +64,12 @@ export async function signOut(redirectTo = "/"): Promise<void> {
   window.location.href = redirectTo;
 }
 
+export async function forgotPassword(email: string, redirectTo?: string): Promise<{ error?: string }> {
+  const { error } = await (authClient as any).forgotPassword({
+    email,
+    redirectTo,
+  });
+  return { error: error?.message ?? undefined };
+}
+
 export { AUTH_PROVIDERS as GROK_PROVIDERS }; // compatibilidade

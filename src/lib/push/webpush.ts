@@ -1,13 +1,25 @@
-import webpush from 'web-push';
-
 // Configuração VAPID - em produção, use variáveis de ambiente
 const VAPID_PUBLIC_KEY = process.env.VITE_VAPID_PUBLIC_KEY || '';
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || '';
 const VAPID_EMAIL = process.env.VAPID_EMAIL || 'mailto:contato@biscateao.app';
 
-// Configurar web-push
-if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
-  webpush.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+let webpushConfigured = false;
+let webpushModule: any = null;
+
+async function ensureWebpushConfigured() {
+  if (webpushConfigured) return;
+  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+    console.warn('[webpush] VAPID keys not configured');
+    return;
+  }
+  try {
+    const webpush = await import('web-push');
+    webpushModule = webpush.default;
+    webpushModule.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+    webpushConfigured = true;
+  } catch (error) {
+    console.warn('[webpush] Failed to configure VAPID:', error);
+  }
 }
 
 interface WebPushSubscription {
@@ -16,9 +28,6 @@ interface WebPushSubscription {
   expirationTime?: number | null;
 }
 
-/**
- * Enviar notificação push para uma subscription
- */
 export async function sendPushNotification(
   subscription: PushSubscription | WebPushSubscription,
   payload: {
@@ -32,16 +41,17 @@ export async function sendPushNotification(
     requireInteraction?: boolean;
   }
 ): Promise<{ success: boolean; error?: string }> {
-  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+  await ensureWebpushConfigured();
+
+  if (!webpushConfigured || !webpushModule) {
     console.warn('[webpush] VAPID keys not configured, skipping send');
     return { success: false, error: 'VAPID not configured' };
   }
 
   try {
-    await webpush.sendNotification(subscription as any, JSON.stringify(payload));
+    await webpushModule.sendNotification(subscription as any, JSON.stringify(payload));
     return { success: true };
   } catch (error: any) {
-    // 410/404 = subscription inválida/expirada
     if (error.statusCode === 410 || error.statusCode === 404) {
       console.log('[webpush] Subscription expired:', (subscription as any).endpoint);
       return { success: false, error: 'subscription_expired' };
@@ -51,9 +61,6 @@ export async function sendPushNotification(
   }
 }
 
-/**
- * Enviar notificação para múltiplas subscriptions
- */
 export async function sendBulkPushNotifications(
   subscriptions: PushSubscription[],
   payload: Parameters<typeof sendPushNotification>[1]
@@ -83,13 +90,10 @@ export async function sendBulkPushNotifications(
   return { sent, failed, expired };
 }
 
-/**
- * Payloads padrão para diferentes tipos de notificação
- */
 export const notificationTemplates = {
   newProposal: (proName: string, jobTitle: string, url: string) => ({
-    title: '💰 Nova proposta recebida!',
-    body: `${proName} enviou orçamento para "${jobTitle}"`,
+    title: 'Novo orcamento recebido!',
+    body: `${proName} enviou orcamento para "${jobTitle}"`,
     tag: 'new-proposal',
     data: { url },
     actions: [
@@ -100,7 +104,7 @@ export const notificationTemplates = {
   }),
 
   newMessage: (fromName: string, preview: string, url: string) => ({
-    title: `💬 ${fromName} respondeu`,
+    title: `${fromName} respondeu`,
     body: preview.length > 50 ? preview.slice(0, 50) + '...' : preview,
     tag: 'new-message',
     data: { url },
@@ -111,8 +115,8 @@ export const notificationTemplates = {
   }),
 
   jobAccepted: (proName: string, jobTitle: string, url: string) => ({
-    title: '✅ Proposta aceita!',
-    body: `Você aceitou a proposta de ${proName} para "${jobTitle}"`,
+    title: 'Proposta aceita!',
+    body: `Voce aceitou a proposta de ${proName} para "${jobTitle}"`,
     tag: 'job-accepted',
     data: { url },
     actions: [
@@ -123,7 +127,7 @@ export const notificationTemplates = {
   }),
 
   jobCompleted: (jobTitle: string, url: string) => ({
-    title: '🎉 Trabalho concluído!',
+    title: 'Trabalho concluido!',
     body: `"${jobTitle}" foi finalizado. Avalie o profissional.`,
     tag: 'job-completed',
     data: { url },
@@ -135,8 +139,8 @@ export const notificationTemplates = {
   }),
 
   reminder: (jobTitle: string, url: string) => ({
-    title: '⏰ Lembrete: pedido sem resposta',
-    body: `Seu pedido "${jobTitle}" não tem propostas há 24h`,
+    title: 'Lembrete: pedido sem resposta',
+    body: `Seu pedido "${jobTitle}" nao tem propostas ha 24h`,
     tag: 'reminder',
     data: { url },
     actions: [
@@ -146,23 +150,18 @@ export const notificationTemplates = {
   }),
 
   promo: (title: string, body: string, url: string) => ({
-    title: `🎁 ${title}`,
+    title: title,
     body,
     tag: 'promo',
     data: { url },
     actions: [
       { action: 'view', title: 'Ver' },
-      { action: 'dismiss', title: 'Não' },
+      { action: 'dismiss', title: 'Nao' },
     ],
   }),
 };
 
-/**
- * Gerar chaves VAPID (rodar uma vez no setup)
- */
 export function generateVAPIDKeys(): { publicKey: string; privateKey: string } {
-  // Em produção, use: npx web-push generate-vapid-keys
-  // Este é apenas um placeholder - NÃO USE EM PRODUÇÃO
   return {
     publicKey: 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U',
     privateKey: 'UUxI4O8-FbRouAevSmBQ6o18hgE4nSG3qwvJTfKc-ls',

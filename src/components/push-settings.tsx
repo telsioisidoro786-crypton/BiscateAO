@@ -1,9 +1,10 @@
-import { Bell, BellOff, Loader2, Check, X } from "lucide-react";
+import { Bell, BellOff, Loader2, Check, X, AlertCircle, Info } from "lucide-react";
 import { useState, useEffect } from "react";
 import { usePWA } from "@/hooks/usePWA";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { loadNotificationPrefs, saveNotificationPrefs } from "@/lib/notification-prefs";
+import { toast } from "sonner";
 
 type NotificationPrefs = {
   proposals: boolean;
@@ -20,14 +21,22 @@ interface PushSettingsProps {
 }
 
 export function PushSettings({ vapidPublicKey, onSubscribed, onUnsubscribed }: PushSettingsProps) {
-  const { pushSubscription, notificationPermission, subscribeToPush, unsubscribeFromPush, requestNotificationPermission } = usePWA();
+  const { 
+    pushSubscription, 
+    notificationPermission, 
+    subscribeToPush, 
+    unsubscribeFromPush, 
+    requestNotificationPermission,
+    vapidConfigured
+  } = usePWA();
+  
   const [isLoading, setIsLoading] = useState(false);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
   const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
   const [prefsLoading, setPrefsLoading] = useState(true);
 
   const isSubscribed = !!pushSubscription;
-  const pushAvailable = Boolean(vapidPublicKey.trim());
+  const pushAvailable = vapidConfigured && Boolean(vapidPublicKey.trim());
 
   // Carregar preferências do servidor
   useEffect(() => {
@@ -46,7 +55,10 @@ export function PushSettings({ vapidPublicKey, onSubscribed, onUnsubscribed }: P
   }, []);
 
   const handleSubscribe = async () => {
-    if (!pushAvailable) return;
+    if (!pushAvailable) {
+      toast.error("Notificações push não configuradas. Configure as chaves VAPID nas variáveis de ambiente.");
+      return;
+    }
     if (notificationPermission === 'denied') {
       setShowPermissionDialog(true);
       return;
@@ -57,9 +69,13 @@ export function PushSettings({ vapidPublicKey, onSubscribed, onUnsubscribed }: P
       const subscription = await subscribeToPush(vapidPublicKey);
       if (subscription) {
         onSubscribed?.();
+        toast.success("Notificações ativadas com sucesso!");
+      } else if (notificationPermission !== 'granted') {
+        toast.error("Permissão de notificação necessária");
       }
     } catch (error) {
       console.error('Subscribe failed:', error);
+      toast.error("Falha ao ativar notificações. Verifique se as chaves VAPID estão configuradas.");
     } finally {
       setIsLoading(false);
     }
@@ -70,8 +86,10 @@ export function PushSettings({ vapidPublicKey, onSubscribed, onUnsubscribed }: P
     try {
       await unsubscribeFromPush();
       onUnsubscribed?.();
+      toast.success("Notificações desativadas");
     } catch (error) {
       console.error('Unsubscribe failed:', error);
+      toast.error("Falha ao desativar notificações");
     } finally {
       setIsLoading(false);
     }
@@ -88,8 +106,10 @@ export function PushSettings({ vapidPublicKey, onSubscribed, onUnsubscribed }: P
     setPrefs(newPrefs);
     try {
       await saveNotificationPrefs(newPrefs);
+      toast.success("Preferência salva");
     } catch (error) {
       console.error('Failed to update notification preference:', error);
+      toast.error("Falha ao salvar preferência");
       // Revert on error
       setPrefs(prefs);
     }
@@ -172,11 +192,34 @@ export function PushSettings({ vapidPublicKey, onSubscribed, onUnsubscribed }: P
         </Button>
       </div>
 
-      {!pushAvailable ? (
-        <p className="mt-4 rounded-lg bg-sunken px-3 py-2 text-sm text-muted">
-          As notificações push ainda não estão disponíveis nesta versão. As tuas preferências continuam guardadas no dispositivo.
-        </p>
-      ) : null}
+      {!pushAvailable && (
+        <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 p-4">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="size-5 text-amber-600" strokeWidth={2} />
+            <div className="flex-1">
+              <p className="font-medium text-amber-800">Notificações push não configuradas</p>
+              <p className="text-sm text-amber-700">
+                As chaves VAPID não estão configuradas no servidor. 
+                Configure <code>VITE_VAPID_PUBLIC_KEY</code> e <code>VAPID_PRIVATE_KEY</code> nas variáveis de ambiente do Vercel.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!vapidConfigured && pushAvailable && (
+        <div className="mt-4 rounded-lg bg-blue-50 border border-blue-200 p-4">
+          <div className="flex items-center gap-3">
+            <Info className="size-5 text-blue-600" strokeWidth={2} />
+            <div className="flex-1">
+              <p className="font-medium text-blue-800">Chave VAPID detectada</p>
+              <p className="text-sm text-blue-700">
+                A chave pública VAPID está configurada. As notificações push estão prontas para uso.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isSubscribed && prefs && (
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -204,6 +247,12 @@ export function PushSettings({ vapidPublicKey, onSubscribed, onUnsubscribed }: P
             enabled={prefs.reminders}
             onChange={(v) => handlePrefChange('reminders', v)}
           />
+          <NotificationToggle
+            title="Promoções e novidades"
+            description="Ofertas especiais e novos recursos (opcional)"
+            enabled={prefs.email}
+            onChange={(v) => handlePrefChange('email', v)}
+          />
         </div>
       )}
     </div>
@@ -212,9 +261,9 @@ export function PushSettings({ vapidPublicKey, onSubscribed, onUnsubscribed }: P
 
 function NotificationToggle({ title, description, enabled, onChange }: { title: string; description: string; enabled: boolean; onChange?: (enabled: boolean) => void }) {
   return (
-    <label className="flex items-center gap-3 rounded-lg border border-border bg-bg p-3 cursor-pointer">
-      <input type="checkbox" checked={enabled} onChange={(e) => onChange?.(e.target.checked)} className="sr-only" />
-      <div className="h-5 w-5 flex items-center justify-center rounded border-2 border-border">
+    <label className="flex items-center gap-3 rounded-lg border border-border bg-bg p-3 cursor-pointer hover:bg-muted/50 transition-colors">
+      <input type="checkbox" checked={enabled} onChange={(e) => onChange?.(e.target.checked)} className="sr-only peer" />
+      <div className="h-5 w-5 flex items-center justify-center rounded border-2 border-border peer-checked:border-primary peer-checked:bg-primary/10 transition-colors">
         {enabled && <Check className="size-3 text-primary" strokeWidth={3} />}
       </div>
       <div className="flex-1">
@@ -227,9 +276,9 @@ function NotificationToggle({ title, description, enabled, onChange }: { title: 
 
 // Componente para página de configurações completa
 export function PushSettingsPage({ vapidPublicKey }: { vapidPublicKey: string }) {
-  const { pushSubscription, notificationPermission, subscribeToPush, unsubscribeFromPush, requestNotificationPermission } = usePWA();
+  const { pushSubscription, notificationPermission, subscribeToPush, unsubscribeFromPush, requestNotificationPermission, vapidConfigured } = usePWA();
   const [isLoading, setIsLoading] = useState(false);
-  const pushAvailable = Boolean(vapidPublicKey.trim());
+  const pushAvailable = vapidConfigured && Boolean(vapidPublicKey.trim());
   const [pagePrefs, setPagePrefs] = useState<NotificationPrefs | null>(null);
   const [pagePrefsLoading, setPagePrefsLoading] = useState(true);
 
@@ -254,9 +303,10 @@ export function PushSettingsPage({ vapidPublicKey }: { vapidPublicKey: string })
     setPagePrefs(newPrefs);
     try {
       await saveNotificationPrefs(newPrefs);
+      toast.success("Preferência salva");
     } catch (error) {
       console.error('Failed to update notification preference:', error);
-      // Revert on error
+      toast.error("Falha ao salvar preferência");
       setPagePrefs(pagePrefs);
     }
   };
