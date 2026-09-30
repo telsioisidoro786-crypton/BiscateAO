@@ -2,6 +2,10 @@ import { createAuthClient } from "better-auth/react";
 
 export const authClient = createAuthClient({
   baseURL: import.meta.env.VITE_BETTER_AUTH_URL ?? (typeof window !== "undefined" ? window.location.origin : "http://localhost:8080"),
+  // Force redirect mode for OAuth (prevents popup-blocked errors)
+  fetchOptions: {
+    credentials: "include",
+  },
 });
 
 export const authEnabled = import.meta.env.VITE_AUTH_ENABLED !== "false";
@@ -25,8 +29,8 @@ export async function signIn(
   const errorCallbackURL = opts.errorCallbackURL ?? "/";
 
   try {
-    const { data, error } = await (authClient.signIn as any).oauth2({
-      providerId,
+    const { data, error } = await authClient.signIn.social({
+      provider: providerId,
       callbackURL,
       errorCallbackURL,
     });
@@ -35,6 +39,10 @@ export async function signIn(
   } catch (err) {
     if (err instanceof Error && err.message.includes("not configured")) {
       throw new Error(`${providerId} login não está configurado. Configure as credenciais OAuth no Supabase.`);
+    }
+    // Handle popup-blocked error specifically
+    if (err instanceof Error && err.message.includes("popup-blocked")) {
+      throw new Error("O navegador bloqueou a janela pop-up. Por favor, permita pop-ups para este site e tente novamente, ou use o login com email.");
     }
     throw err;
   }
