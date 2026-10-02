@@ -1,0 +1,6 @@
+tree fca6d3bbfb4601ae6a8d824b41ee6dbd825e6140
+parent 7303ed9ca4f08a45f776e0e848a5f8e2f6e95274
+author telsioisidoro786-crypton <telsioisidoro786@gmail.com> 1790820901 +0100
+committer telsioisidoro786-crypton <telsioisidoro786@gmail.com> 1790820901 +0100
+
+fix: remove conflicting \.ts and force rebuild
