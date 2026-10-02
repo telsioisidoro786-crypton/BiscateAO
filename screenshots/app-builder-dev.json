@@ -1,0 +1,38 @@
+{
+  "url": "http://127.0.0.1:8080",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "BiscateAO",
+      "hasCanvas": false,
+      "bodyTextLen": 1283,
+      "bodyTextHash": "923c9ab2240568d898dd5c18f4e8502374e10ca88f435e98076bd0da73ff3fa8",
+      "bodyTextPrefix": "BiscateAO Início Ofícios Pedir Pedidos Guardados Viana LUANDA · ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\Administrador\\Documents\\biscateAO\\screenshots\\app-builder-dev.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "BiscateAO",
+      "hasCanvas": false,
+      "bodyTextLen": 1283,
+      "bodyTextHash": "e6039beba55f57088d2569e6a831e9ea493ca54a2895710004e873c2ef5b6edb",
+      "bodyTextPrefix": "BiscateAO Viana LUANDA · OFÍCIOS DO BAIRRO O biscate que precisa",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\Administrador\\Documents\\biscateAO\\screenshots\\app-builder-dev-mobile.png"
+    }
+  },
+  "brandWarnings": [
+    "BRAND NOTE: no custom public/og.jpg — the platform will serve the og.grok.me placeholder. Custom cards are the default for games of every kind (DOM board/word games included), whimsical apps, creative tools, and brand-forward pages — only plain utilities (converters, CRUD trackers, admin dashboards) keep the placeholder. If this app is not a plain utility, finish the brand-asset pass per \\workspace\\.grok\\skills\\og\\SKILL.md."
+  ],
+  "authWarnings": [],
+  "verdictFile": "C:\\Users\\Administrador\\Documents\\biscateAO\\screenshots\\app-builder-dev.json"
+}
