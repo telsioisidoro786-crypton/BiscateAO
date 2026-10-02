@@ -17,14 +17,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   console.log('[forgot-password] BETTER_AUTH_URL:', process.env.BETTER_AUTH_URL);
 
   try {
-    // Dispara a redefinição de senha oficial do Better Auth
     console.log('[forgot-password] Chamando auth.api.sendPasswordResetEmail...');
     await auth.api.sendPasswordResetEmail({
       body: {
         email,
         redirectTo: redirectTo || "https://biscate-ao-seven.vercel.app/reset-password",
       },
-    );
+    });
 
     console.log('[forgot-password] Email enviado com sucesso para:', email);
     return res.status(200).json({ success: true, message: "E-mail enviado!" });
