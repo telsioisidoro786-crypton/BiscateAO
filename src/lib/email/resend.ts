@@ -39,13 +39,6 @@ export async function sendEmail(payload: EmailPayload): Promise<{ success: boole
   }
 }
 
-interface EmailPayload {
-  to: string;
-  subject: string;
-  html: string;
-  text?: string;
-}
-
 export async function sendVerificationEmail(email: string, name: string, token: string): Promise<{ success: boolean; error?: string }> {
   const verifyUrl = `https://biscate-ao-seven.vercel.app/auth/confirm?token=${token}&type=signup&email=${encodeURIComponent(email)}`;
   

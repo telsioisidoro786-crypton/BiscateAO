@@ -1,4 +1,4 @@
-import { auth } from "@lib/auth/server";
+import { auth } from "../../../src/lib/auth/server";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -23,7 +23,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         email,
         redirectTo: redirectTo || "https://biscate-ao-seven.vercel.app/reset-password",
       },
-    });
+    );
 
     console.log('[forgot-password] Email enviado com sucesso para:', email);
     return res.status(200).json({ success: true, message: "E-mail enviado!" });
