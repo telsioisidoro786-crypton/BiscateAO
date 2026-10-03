@@ -1,5 +1,5 @@
 {
-  "url": "http://127.0.0.1:8081",
+  "url": "http://127.0.0.1:8080",
   "viewports": {
     "desktop": {
       "width": 1280,
@@ -7,8 +7,8 @@
       "status": 200,
       "title": "BiscateAO",
       "hasCanvas": false,
-      "bodyTextLen": 1283,
-      "bodyTextHash": "923c9ab2240568d898dd5c18f4e8502374e10ca88f435e98076bd0da73ff3fa8",
+      "bodyTextLen": 1287,
+      "bodyTextHash": "9572a17ec8a2aa6e64329b531f7e22443dcdb419271925e8c9401a847936d050",
       "bodyTextPrefix": "BiscateAO Início Ofícios Pedir Pedidos Guardados Viana LUANDA · ",
       "horizontalOverflow": false,
       "consoleErrors": [],
@@ -21,8 +21,8 @@
       "status": 200,
       "title": "BiscateAO",
       "hasCanvas": false,
-      "bodyTextLen": 1283,
-      "bodyTextHash": "e6039beba55f57088d2569e6a831e9ea493ca54a2895710004e873c2ef5b6edb",
+      "bodyTextLen": 1287,
+      "bodyTextHash": "0c0253416c21daef67bced4eac3f715de32ffcf647269d3ce8e055238188c7e2",
       "bodyTextPrefix": "BiscateAO Viana LUANDA · OFÍCIOS DO BAIRRO O biscate que precisa",
       "horizontalOverflow": false,
       "consoleErrors": [],
