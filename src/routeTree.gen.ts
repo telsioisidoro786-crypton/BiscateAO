@@ -24,24 +24,12 @@ import { Route as PedidosIdRouteImport } from './routes/pedidos.$id'
 import { Route as ProfissionaisIdRouteImport } from './routes/profissionais.$id'
 import { Route as ProfissionalCadastrarRouteImport } from './routes/profissional.cadastrar'
 import { Route as ProfissionalPedidosRouteImport } from './routes/profissional.pedidos'
-import { Route as ApiAuthRestRouteImport } from './routes/api/auth/$rest'
-import { Route as ApiAuthRest_newRouteImport } from './routes/api/auth/$rest_new'
-import { Route as ApiAuthForgotPasswordRouteImport } from './routes/api/auth/forgot-password'
-import { Route as ApiAuthGetSessionRouteImport } from './routes/api/auth/get-session'
-import { Route as ApiAuthProvidersRouteImport } from './routes/api/auth/providers'
-import { Route as ApiAuthSignOutRouteImport } from './routes/api/auth/sign-out'
-import { Route as ApiDebugAuthRouteImport } from './routes/api/debug/auth'
-import { Route as ApiDebugEnvRouteImport } from './routes/api/debug/env'
 import { Route as ApiPushSubscribeRouteImport } from './routes/api/push/subscribe'
 import { Route as ApiPushUnsubscribeRouteImport } from './routes/api/push/unsubscribe'
 import { Route as ApiPushVapidStatusRouteImport } from './routes/api/push/vapid-status'
 import { Route as ApiUploadAvatarRouteImport } from './routes/api/upload/avatar'
 import { Route as ApiUploadDeleteRouteImport } from './routes/api/upload/delete'
 import { Route as ApiUploadPortfolioRouteImport } from './routes/api/upload/portfolio'
-import { Route as ApiAuthCallbackGithubRouteImport } from './routes/api/auth/callback/github'
-import { Route as ApiAuthCallbackGoogleRouteImport } from './routes/api/auth/callback/google'
-import { Route as ApiAuthSignInOauth2RouteImport } from './routes/api/auth/sign-in/oauth2'
-import { Route as ApiAuthSignInSocialRouteImport } from './routes/api/auth/sign-in/social'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -118,46 +106,6 @@ const ProfissionalPedidosRoute = ProfissionalPedidosRouteImport.update({
   path: '/profissional/pedidos',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAuthRestRoute = ApiAuthRestRouteImport.update({
-  id: '/api/auth/$rest',
-  path: '/api/auth/$rest',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAuthRest_newRoute = ApiAuthRest_newRouteImport.update({
-  id: '/api/auth/$rest_new',
-  path: '/api/auth/$rest_new',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAuthForgotPasswordRoute = ApiAuthForgotPasswordRouteImport.update({
-  id: '/api/auth/forgot-password',
-  path: '/api/auth/forgot-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAuthGetSessionRoute = ApiAuthGetSessionRouteImport.update({
-  id: '/api/auth/get-session',
-  path: '/api/auth/get-session',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAuthProvidersRoute = ApiAuthProvidersRouteImport.update({
-  id: '/api/auth/providers',
-  path: '/api/auth/providers',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAuthSignOutRoute = ApiAuthSignOutRouteImport.update({
-  id: '/api/auth/sign-out',
-  path: '/api/auth/sign-out',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiDebugAuthRoute = ApiDebugAuthRouteImport.update({
-  id: '/api/debug/auth',
-  path: '/api/debug/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiDebugEnvRoute = ApiDebugEnvRouteImport.update({
-  id: '/api/debug/env',
-  path: '/api/debug/env',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPushSubscribeRoute = ApiPushSubscribeRouteImport.update({
   id: '/api/push/subscribe',
   path: '/api/push/subscribe',
@@ -188,26 +136,6 @@ const ApiUploadPortfolioRoute = ApiUploadPortfolioRouteImport.update({
   path: '/api/upload/portfolio',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAuthCallbackGithubRoute = ApiAuthCallbackGithubRouteImport.update({
-  id: '/api/auth/callback/github',
-  path: '/api/auth/callback/github',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAuthCallbackGoogleRoute = ApiAuthCallbackGoogleRouteImport.update({
-  id: '/api/auth/callback/google',
-  path: '/api/auth/callback/google',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAuthSignInOauth2Route = ApiAuthSignInOauth2RouteImport.update({
-  id: '/api/auth/sign-in/oauth2',
-  path: '/api/auth/sign-in/oauth2',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAuthSignInSocialRoute = ApiAuthSignInSocialRouteImport.update({
-  id: '/api/auth/sign-in/social',
-  path: '/api/auth/sign-in/social',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -225,24 +153,12 @@ export interface FileRoutesByFullPath {
   '/profissional/pedidos': typeof ProfissionalPedidosRoute
   '/oficios/': typeof OficiosIndexRoute
   '/pedidos/': typeof PedidosIndexRoute
-  '/api/auth/$rest': typeof ApiAuthRestRoute
-  '/api/auth/$rest_new': typeof ApiAuthRest_newRoute
-  '/api/auth/forgot-password': typeof ApiAuthForgotPasswordRoute
-  '/api/auth/get-session': typeof ApiAuthGetSessionRoute
-  '/api/auth/providers': typeof ApiAuthProvidersRoute
-  '/api/auth/sign-out': typeof ApiAuthSignOutRoute
-  '/api/debug/auth': typeof ApiDebugAuthRoute
-  '/api/debug/env': typeof ApiDebugEnvRoute
   '/api/push/subscribe': typeof ApiPushSubscribeRoute
   '/api/push/unsubscribe': typeof ApiPushUnsubscribeRoute
   '/api/push/vapid-status': typeof ApiPushVapidStatusRoute
   '/api/upload/avatar': typeof ApiUploadAvatarRoute
   '/api/upload/delete': typeof ApiUploadDeleteRoute
   '/api/upload/portfolio': typeof ApiUploadPortfolioRoute
-  '/api/auth/callback/github': typeof ApiAuthCallbackGithubRoute
-  '/api/auth/callback/google': typeof ApiAuthCallbackGoogleRoute
-  '/api/auth/sign-in/oauth2': typeof ApiAuthSignInOauth2Route
-  '/api/auth/sign-in/social': typeof ApiAuthSignInSocialRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -260,24 +176,12 @@ export interface FileRoutesByTo {
   '/profissional/pedidos': typeof ProfissionalPedidosRoute
   '/oficios': typeof OficiosIndexRoute
   '/pedidos': typeof PedidosIndexRoute
-  '/api/auth/$rest': typeof ApiAuthRestRoute
-  '/api/auth/$rest_new': typeof ApiAuthRest_newRoute
-  '/api/auth/forgot-password': typeof ApiAuthForgotPasswordRoute
-  '/api/auth/get-session': typeof ApiAuthGetSessionRoute
-  '/api/auth/providers': typeof ApiAuthProvidersRoute
-  '/api/auth/sign-out': typeof ApiAuthSignOutRoute
-  '/api/debug/auth': typeof ApiDebugAuthRoute
-  '/api/debug/env': typeof ApiDebugEnvRoute
   '/api/push/subscribe': typeof ApiPushSubscribeRoute
   '/api/push/unsubscribe': typeof ApiPushUnsubscribeRoute
   '/api/push/vapid-status': typeof ApiPushVapidStatusRoute
   '/api/upload/avatar': typeof ApiUploadAvatarRoute
   '/api/upload/delete': typeof ApiUploadDeleteRoute
   '/api/upload/portfolio': typeof ApiUploadPortfolioRoute
-  '/api/auth/callback/github': typeof ApiAuthCallbackGithubRoute
-  '/api/auth/callback/google': typeof ApiAuthCallbackGoogleRoute
-  '/api/auth/sign-in/oauth2': typeof ApiAuthSignInOauth2Route
-  '/api/auth/sign-in/social': typeof ApiAuthSignInSocialRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -296,24 +200,12 @@ export interface FileRoutesById {
   '/profissional/pedidos': typeof ProfissionalPedidosRoute
   '/oficios/': typeof OficiosIndexRoute
   '/pedidos/': typeof PedidosIndexRoute
-  '/api/auth/$rest': typeof ApiAuthRestRoute
-  '/api/auth/$rest_new': typeof ApiAuthRest_newRoute
-  '/api/auth/forgot-password': typeof ApiAuthForgotPasswordRoute
-  '/api/auth/get-session': typeof ApiAuthGetSessionRoute
-  '/api/auth/providers': typeof ApiAuthProvidersRoute
-  '/api/auth/sign-out': typeof ApiAuthSignOutRoute
-  '/api/debug/auth': typeof ApiDebugAuthRoute
-  '/api/debug/env': typeof ApiDebugEnvRoute
   '/api/push/subscribe': typeof ApiPushSubscribeRoute
   '/api/push/unsubscribe': typeof ApiPushUnsubscribeRoute
   '/api/push/vapid-status': typeof ApiPushVapidStatusRoute
   '/api/upload/avatar': typeof ApiUploadAvatarRoute
   '/api/upload/delete': typeof ApiUploadDeleteRoute
   '/api/upload/portfolio': typeof ApiUploadPortfolioRoute
-  '/api/auth/callback/github': typeof ApiAuthCallbackGithubRoute
-  '/api/auth/callback/google': typeof ApiAuthCallbackGoogleRoute
-  '/api/auth/sign-in/oauth2': typeof ApiAuthSignInOauth2Route
-  '/api/auth/sign-in/social': typeof ApiAuthSignInSocialRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -333,24 +225,12 @@ export interface FileRouteTypes {
     | '/profissional/pedidos'
     | '/oficios/'
     | '/pedidos/'
-    | '/api/auth/$rest'
-    | '/api/auth/$rest_new'
-    | '/api/auth/forgot-password'
-    | '/api/auth/get-session'
-    | '/api/auth/providers'
-    | '/api/auth/sign-out'
-    | '/api/debug/auth'
-    | '/api/debug/env'
     | '/api/push/subscribe'
     | '/api/push/unsubscribe'
     | '/api/push/vapid-status'
     | '/api/upload/avatar'
     | '/api/upload/delete'
     | '/api/upload/portfolio'
-    | '/api/auth/callback/github'
-    | '/api/auth/callback/google'
-    | '/api/auth/sign-in/oauth2'
-    | '/api/auth/sign-in/social'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -368,24 +248,12 @@ export interface FileRouteTypes {
     | '/profissional/pedidos'
     | '/oficios'
     | '/pedidos'
-    | '/api/auth/$rest'
-    | '/api/auth/$rest_new'
-    | '/api/auth/forgot-password'
-    | '/api/auth/get-session'
-    | '/api/auth/providers'
-    | '/api/auth/sign-out'
-    | '/api/debug/auth'
-    | '/api/debug/env'
     | '/api/push/subscribe'
     | '/api/push/unsubscribe'
     | '/api/push/vapid-status'
     | '/api/upload/avatar'
     | '/api/upload/delete'
     | '/api/upload/portfolio'
-    | '/api/auth/callback/github'
-    | '/api/auth/callback/google'
-    | '/api/auth/sign-in/oauth2'
-    | '/api/auth/sign-in/social'
   id:
     | '__root__'
     | '/'
@@ -403,24 +271,12 @@ export interface FileRouteTypes {
     | '/profissional/pedidos'
     | '/oficios/'
     | '/pedidos/'
-    | '/api/auth/$rest'
-    | '/api/auth/$rest_new'
-    | '/api/auth/forgot-password'
-    | '/api/auth/get-session'
-    | '/api/auth/providers'
-    | '/api/auth/sign-out'
-    | '/api/debug/auth'
-    | '/api/debug/env'
     | '/api/push/subscribe'
     | '/api/push/unsubscribe'
     | '/api/push/vapid-status'
     | '/api/upload/avatar'
     | '/api/upload/delete'
     | '/api/upload/portfolio'
-    | '/api/auth/callback/github'
-    | '/api/auth/callback/google'
-    | '/api/auth/sign-in/oauth2'
-    | '/api/auth/sign-in/social'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -439,24 +295,12 @@ export interface RootRouteChildren {
   ProfissionalPedidosRoute: typeof ProfissionalPedidosRoute
   OficiosIndexRoute: typeof OficiosIndexRoute
   PedidosIndexRoute: typeof PedidosIndexRoute
-  ApiAuthRestRoute: typeof ApiAuthRestRoute
-  ApiAuthRest_newRoute: typeof ApiAuthRest_newRoute
-  ApiAuthForgotPasswordRoute: typeof ApiAuthForgotPasswordRoute
-  ApiAuthGetSessionRoute: typeof ApiAuthGetSessionRoute
-  ApiAuthProvidersRoute: typeof ApiAuthProvidersRoute
-  ApiAuthSignOutRoute: typeof ApiAuthSignOutRoute
-  ApiDebugAuthRoute: typeof ApiDebugAuthRoute
-  ApiDebugEnvRoute: typeof ApiDebugEnvRoute
   ApiPushSubscribeRoute: typeof ApiPushSubscribeRoute
   ApiPushUnsubscribeRoute: typeof ApiPushUnsubscribeRoute
   ApiPushVapidStatusRoute: typeof ApiPushVapidStatusRoute
   ApiUploadAvatarRoute: typeof ApiUploadAvatarRoute
   ApiUploadDeleteRoute: typeof ApiUploadDeleteRoute
   ApiUploadPortfolioRoute: typeof ApiUploadPortfolioRoute
-  ApiAuthCallbackGithubRoute: typeof ApiAuthCallbackGithubRoute
-  ApiAuthCallbackGoogleRoute: typeof ApiAuthCallbackGoogleRoute
-  ApiAuthSignInOauth2Route: typeof ApiAuthSignInOauth2Route
-  ApiAuthSignInSocialRoute: typeof ApiAuthSignInSocialRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -566,62 +410,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfissionalPedidosRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/auth/$rest': {
-      id: '/api/auth/$rest'
-      path: '/api/auth/$rest'
-      fullPath: '/api/auth/$rest'
-      preLoaderRoute: typeof ApiAuthRestRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/auth/$rest_new': {
-      id: '/api/auth/$rest_new'
-      path: '/api/auth/$rest_new'
-      fullPath: '/api/auth/$rest_new'
-      preLoaderRoute: typeof ApiAuthRest_newRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/auth/forgot-password': {
-      id: '/api/auth/forgot-password'
-      path: '/api/auth/forgot-password'
-      fullPath: '/api/auth/forgot-password'
-      preLoaderRoute: typeof ApiAuthForgotPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/auth/get-session': {
-      id: '/api/auth/get-session'
-      path: '/api/auth/get-session'
-      fullPath: '/api/auth/get-session'
-      preLoaderRoute: typeof ApiAuthGetSessionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/auth/providers': {
-      id: '/api/auth/providers'
-      path: '/api/auth/providers'
-      fullPath: '/api/auth/providers'
-      preLoaderRoute: typeof ApiAuthProvidersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/auth/sign-out': {
-      id: '/api/auth/sign-out'
-      path: '/api/auth/sign-out'
-      fullPath: '/api/auth/sign-out'
-      preLoaderRoute: typeof ApiAuthSignOutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/debug/auth': {
-      id: '/api/debug/auth'
-      path: '/api/debug/auth'
-      fullPath: '/api/debug/auth'
-      preLoaderRoute: typeof ApiDebugAuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/debug/env': {
-      id: '/api/debug/env'
-      path: '/api/debug/env'
-      fullPath: '/api/debug/env'
-      preLoaderRoute: typeof ApiDebugEnvRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/push/subscribe': {
       id: '/api/push/subscribe'
       path: '/api/push/subscribe'
@@ -664,34 +452,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiUploadPortfolioRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/auth/callback/github': {
-      id: '/api/auth/callback/github'
-      path: '/api/auth/callback/github'
-      fullPath: '/api/auth/callback/github'
-      preLoaderRoute: typeof ApiAuthCallbackGithubRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/auth/callback/google': {
-      id: '/api/auth/callback/google'
-      path: '/api/auth/callback/google'
-      fullPath: '/api/auth/callback/google'
-      preLoaderRoute: typeof ApiAuthCallbackGoogleRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/auth/sign-in/oauth2': {
-      id: '/api/auth/sign-in/oauth2'
-      path: '/api/auth/sign-in/oauth2'
-      fullPath: '/api/auth/sign-in/oauth2'
-      preLoaderRoute: typeof ApiAuthSignInOauth2RouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/auth/sign-in/social': {
-      id: '/api/auth/sign-in/social'
-      path: '/api/auth/sign-in/social'
-      fullPath: '/api/auth/sign-in/social'
-      preLoaderRoute: typeof ApiAuthSignInSocialRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -711,24 +471,12 @@ const rootRouteChildren: RootRouteChildren = {
   ProfissionalPedidosRoute: ProfissionalPedidosRoute,
   OficiosIndexRoute: OficiosIndexRoute,
   PedidosIndexRoute: PedidosIndexRoute,
-  ApiAuthRestRoute: ApiAuthRestRoute,
-  ApiAuthRest_newRoute: ApiAuthRest_newRoute,
-  ApiAuthForgotPasswordRoute: ApiAuthForgotPasswordRoute,
-  ApiAuthGetSessionRoute: ApiAuthGetSessionRoute,
-  ApiAuthProvidersRoute: ApiAuthProvidersRoute,
-  ApiAuthSignOutRoute: ApiAuthSignOutRoute,
-  ApiDebugAuthRoute: ApiDebugAuthRoute,
-  ApiDebugEnvRoute: ApiDebugEnvRoute,
   ApiPushSubscribeRoute: ApiPushSubscribeRoute,
   ApiPushUnsubscribeRoute: ApiPushUnsubscribeRoute,
   ApiPushVapidStatusRoute: ApiPushVapidStatusRoute,
   ApiUploadAvatarRoute: ApiUploadAvatarRoute,
   ApiUploadDeleteRoute: ApiUploadDeleteRoute,
   ApiUploadPortfolioRoute: ApiUploadPortfolioRoute,
-  ApiAuthCallbackGithubRoute: ApiAuthCallbackGithubRoute,
-  ApiAuthCallbackGoogleRoute: ApiAuthCallbackGoogleRoute,
-  ApiAuthSignInOauth2Route: ApiAuthSignInOauth2Route,
-  ApiAuthSignInSocialRoute: ApiAuthSignInSocialRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

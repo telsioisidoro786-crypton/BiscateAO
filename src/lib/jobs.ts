@@ -5,6 +5,7 @@ import { getWorker, URGENCY } from "@/lib/catalog";
 import { WORKERS } from "@/lib/catalog.mock";
 import { stripSensitive } from "@/lib/utils";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { sendNewProposalEmail, sendNewMessageEmail, sendJobAcceptedEmail, sendJobCompletedEmail } from "@/lib/email/resend";
 
 export type JobStatus = "aberto" | "aceite" | "concluido" | "cancelado";
 export type JobRow = { id: string; category: string; title: string; description: string; neighborhood: string; budget_min: number | null; budget_max: number | null; urgency: string; preferred_worker_id: string | null; created_at: string; status: JobStatus; accepted_proposal_id: string | null };
@@ -56,9 +57,132 @@ export const listProfessionalOpenJobsOptional = createServerFn({ method: "GET" }
   if (!professional) return { professional: null, jobs: [] as JobRow[] }; 
   const jobs = await sql<JobRow>`select id, category, title, description, neighborhood, budget_min, budget_max, urgency, preferred_worker_id, status, accepted_proposal_id, created_at::text as created_at from jobs j where j.category = ${professional.category} and j.status = 'aberto' and not exists (select 1 from proposals p where p.job_id = j.id and p.worker_id = ${professional.id}) order by j.created_at desc limit 40`; 
   return { professional, jobs }; });
-export const submitProfessionalProposal = createServerFn({ method: "POST" }).validator(z.object({ jobId: z.string().min(1), amount: z.number().int().min(1).max(5_000_000), eta: z.string().trim().min(2).max(80), message: z.string().trim().min(8).max(500) })).middleware([authMiddleware]).handler(async ({ data, context }) => { const sql = await getSql(); const professional = (await sql<Professional>`select id, category, name, rating::float as rating, available_today, neighborhood, whatsapp from professionals where owner_user_id = ${context.userId} and profile_status = 'ativo' limit 1`)[0]; if (!professional) throw new Error("Cria primeiro o teu perfil profissional."); const job = (await sql<{ id: string }>`select id from jobs where id = ${data.jobId} and category = ${professional.category} and status = 'aberto'`)[0]; if (!job) throw new Error("Este pedido já não aceita propostas."); await sql`insert into proposals (id, job_id, worker_id, amount, message, eta) values (${newId("p")}, ${data.jobId}, ${professional.id}, ${data.amount}, ${data.message}, ${data.eta}) on conflict (job_id, worker_id) do update set amount = excluded.amount, eta = excluded.eta, message = excluded.message, created_at = now()`; return { ok: true }; });
-export const acceptJobProposal = createServerFn({ method: "POST" }).validator(z.object({ jobId: z.string().min(1), proposalId: z.string().min(1) })).middleware([authMiddleware]).handler(async ({ data, context }) => { const sql = await getSql(); const proposal = (await sql<ProposalRow>`select id, job_id, worker_id, amount, message, eta, created_at::text as created_at from proposals where id = ${data.proposalId} and job_id = ${data.jobId}`)[0]; if (!proposal) throw new Error("Proposta não encontrada."); const changed = await sql<{ id: string }>`update jobs set status = 'aceite', accepted_proposal_id = ${data.proposalId} where id = ${data.jobId} and user_id = ${context.userId} and status = 'aberto' returning id`; if (!changed[0]) throw new Error("Este pedido já não pode ser aceite."); return { proposal }; });
-export const updateMyJobStatus = createServerFn({ method: "POST" }).validator(z.object({ jobId: z.string().min(1), status: z.enum(["cancelado", "concluido"]) })).middleware([authMiddleware]).handler(async ({ data, context }) => { const sql = await getSql(); const rows = await sql<{ id: string }>`update jobs set status = ${data.status}, cancelled_at = case when ${data.status} = 'cancelado' then now() else cancelled_at end, completed_at = case when ${data.status} = 'concluido' then now() else completed_at end where id = ${data.jobId} and user_id = ${context.userId} and status in ('aberto', 'aceite') returning id`; if (!rows[0]) throw new Error("Não foi possível atualizar este pedido."); return { status: data.status }; });
+export const submitProfessionalProposal = createServerFn({ method: "POST" }).validator(z.object({ jobId: z.string().min(1), amount: z.number().int().min(1).max(5_000_000), eta: z.string().trim().min(2).max(80), message: z.string().trim().min(8).max(500) })).middleware([authMiddleware]).handler(async ({ data, context }) => { const sql = await getSql(); const professional = (await sql<Professional>`select id, category, name, rating::float as rating, available_today, neighborhood, whatsapp from professionals where owner_user_id = ${context.userId} and profile_status = 'ativo' limit 1`)[0]; if (!professional) throw new Error("Cria primeiro o teu perfil profissional."); const job = (await sql<{ id: string; user_id: string; title: string; category: string; neighborhood: string }>`select id, user_id, title, category, neighborhood from jobs where id = ${data.jobId} and category = ${professional.category} and status = 'aberto'`)[0]; if (!job) throw new Error("Este pedido já não aceita propostas."); await sql`insert into proposals (id, job_id, worker_id, amount, message, eta) values (${newId("p")}, ${data.jobId}, ${professional.id}, ${data.amount}, ${data.message}, ${data.eta}) on conflict (job_id, worker_id) do update set amount = excluded.amount, eta = excluded.eta, message = excluded.message, created_at = now()`;
+  
+  // Send email notification to client
+  const client = await sql<{ email: string; name: string }>`select email, name from "user" where id = ${job.user_id} limit 1`;
+  if (client[0]) {
+    const prefs = await sql<{ notify_proposals: boolean; notify_email: boolean }>`select notify_proposals, notify_email from account_settings where user_id = ${job.user_id} limit 1`;
+    if (prefs[0]?.notify_proposals && prefs[0]?.notify_email) {
+      const proposalUrl = `${process.env.BETTER_AUTH_URL ?? "https://biscate-ao-seven.vercel.app"}/pedidos/${job.id}`;
+      await sendNewProposalEmail({
+        clientEmail: client[0].email,
+        clientName: client[0].name || "",
+        professionalName: professional.name,
+        professionalCategory: professional.category,
+        jobTitle: job.title,
+        jobNeighborhood: job.neighborhood,
+        amount: data.amount,
+        eta: data.eta,
+        proposalUrl,
+      });
+    }
+  }
+  
+  return { ok: true }; });
+export const acceptJobProposal = createServerFn({ method: "POST" }).validator(z.object({ jobId: z.string().min(1), proposalId: z.string().min(1) })).middleware([authMiddleware]).handler(async ({ data, context }) => { const sql = await getSql(); const proposal = (await sql<ProposalRow>`select id, job_id, worker_id, amount, message, eta, created_at::text as created_at from proposals where id = ${data.proposalId} and job_id = ${data.jobId}`)[0]; if (!proposal) throw new Error("Proposta não encontrada."); const changed = await sql<{ id: string }>`update jobs set status = 'aceite', accepted_proposal_id = ${data.proposalId} where id = ${data.jobId} and user_id = ${context.userId} and status = 'aberto' returning id`; if (!changed[0]) throw new Error("Este pedido já não pode ser aceite.");
+  
+  // Send email notification to professional
+  const professional = await sql<{ owner_user_id: string; name: string; whatsapp: string }>`select owner_user_id, name, whatsapp from professionals where id = ${proposal.worker_id} limit 1`;
+  if (professional[0]?.owner_user_id) {
+    const proUser = await sql<{ email: string; name: string }>`select email, name from "user" where id = ${professional[0].owner_user_id} limit 1`;
+    if (proUser[0]) {
+      const prefs = await sql<{ notify_job_updates: boolean; notify_email: boolean }>`select notify_job_updates, notify_email from account_settings where user_id = ${professional[0].owner_user_id} limit 1`;
+      if (prefs[0]?.notify_job_updates && prefs[0]?.notify_email) {
+        const client = await sql<{ name: string }>`select name from "user" where id = ${context.userId} limit 1`;
+        const chatUrl = `${process.env.BETTER_AUTH_URL ?? "https://biscate-ao-seven.vercel.app"}/pedidos/${data.jobId}`;
+        await sendJobAcceptedEmail({
+          professionalEmail: proUser[0].email,
+          professionalName: proUser[0].name || professional[0].name,
+          clientName: client[0]?.name || "Cliente",
+          jobTitle: (await sql<{ title: string }>`select title from jobs where id = ${data.jobId} limit 1`)[0]?.title || "Pedido",
+          jobNeighborhood: (await sql<{ neighborhood: string }>`select neighborhood from jobs where id = ${data.jobId} limit 1`)[0]?.neighborhood || "",
+          chatUrl,
+        });
+      }
+    }
+  }
+  
+  return { proposal }; });
+export const updateMyJobStatus = createServerFn({ method: "POST" }).validator(z.object({ jobId: z.string().min(1), status: z.enum(["cancelado", "concluido"]) })).middleware([authMiddleware]).handler(async ({ data, context }) => { const sql = await getSql(); const rows = await sql<{ id: string }>`update jobs set status = ${data.status}, cancelled_at = case when ${data.status} = 'cancelado' then now() else cancelled_at end, completed_at = case when ${data.status} = 'concluido' then now() else completed_at end where id = ${data.jobId} and user_id = ${context.userId} and status in ('aberto', 'aceite') returning id`; if (!rows[0]) throw new Error("Não foi possível atualizar este pedido.");
+  
+  // Send email notification when job is completed (for review)
+  if (data.status === "concluido") {
+    const job = await sql<{ title: string; user_id: string; accepted_proposal_id: string }>`select title, user_id, accepted_proposal_id from jobs where id = ${data.jobId} limit 1`;
+    if (job[0]?.accepted_proposal_id) {
+      const proposal = await sql<{ worker_id: string }>`select worker_id from proposals where id = ${job[0].accepted_proposal_id} limit 1`;
+      if (proposal[0]) {
+        const professional = await sql<{ owner_user_id: string; name: string }>`select owner_user_id, name from professionals where id = ${proposal[0].worker_id} limit 1`;
+        if (professional[0]?.owner_user_id) {
+          const clientUser = await sql<{ email: string; name: string }>`select email, name from "user" where id = ${job[0].user_id} limit 1`;
+          if (clientUser[0]) {
+            const prefs = await sql<{ notify_job_updates: boolean; notify_email: boolean }>`select notify_job_updates, notify_email from account_settings where user_id = ${job[0].user_id} limit 1`;
+            if (prefs[0]?.notify_job_updates && prefs[0]?.notify_email) {
+              const reviewUrl = `${process.env.BETTER_AUTH_URL ?? "https://biscate-ao-seven.vercel.app"}/pedidos/${data.jobId}`;
+              await sendJobCompletedEmail({
+                clientEmail: clientUser[0].email,
+                clientName: clientUser[0].name || "",
+                professionalName: professional[0].name,
+                jobTitle: job[0].title,
+                reviewUrl,
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  return { status: data.status }; });
 export const updateMyJob = createServerFn({ method: "POST" }).validator(z.object({ jobId: z.string().min(1), description: z.string().trim().min(8).max(400), budgetMax: z.number().int().min(0).max(5_000_000).nullable().optional(), urgency: z.enum(["hoje", "amanha", "semana", "flexivel"]) })).middleware([authMiddleware]).handler(async ({ data, context }) => { const sql = await getSql(); const description = stripSensitive(data.description); const rows = await sql<{ id: string }>`update jobs set description = ${description}, budget_max = ${data.budgetMax ?? null}, urgency = ${data.urgency} where id = ${data.jobId} and user_id = ${context.userId} and status = 'aberto' returning id`; if (!rows[0]) throw new Error("Só podes editar pedidos que ainda estão abertos."); return { id: rows[0].id }; });
-export const addJobMessage = createServerFn({ method: "POST" }).validator(z.object({ jobId: z.string().min(1), body: z.string().trim().min(1).max(500) })).middleware([authMiddleware]).handler(async ({ data, context }) => { const sql = await getSql(); const client = (await sql<{ id: string }>`select id from jobs where id = ${data.jobId} and user_id = ${context.userId} and status = 'aceite'`)[0]; const professional = client ? null : (await sql<{ id: string }>`select j.id from jobs j join proposals p on p.id = j.accepted_proposal_id join professionals pr on pr.id = p.worker_id where j.id = ${data.jobId} and j.status = 'aceite' and pr.owner_user_id = ${context.userId}`)[0]; if (!client && !professional) throw new Error("A conversa fica disponível depois de aceitares a proposta."); const senderRole = client ? "cliente" : "profissional"; const id = newId("msg"); await sql`insert into job_messages (id, job_id, user_id, sender_role, body) values (${id}, ${data.jobId}, ${context.userId}, ${senderRole}, ${data.body})`; return { id, body: data.body, sender_role: senderRole, created_at: new Date().toISOString() }; });
+export const addJobMessage = createServerFn({ method: "POST" }).validator(z.object({ jobId: z.string().min(1), body: z.string().trim().min(1).max(500) })).middleware([authMiddleware]).handler(async ({ data, context }) => { const sql = await getSql(); const client = (await sql<{ id: string; user_id: string }>`select id, user_id from jobs where id = ${data.jobId} and user_id = ${context.userId} and status = 'aceite'`)[0]; const professional = client ? null : (await sql<{ id: string; owner_user_id: string }>`select j.id, pr.owner_user_id from jobs j join proposals p on p.id = j.accepted_proposal_id join professionals pr on pr.id = p.worker_id where j.id = ${data.jobId} and j.status = 'aceite' and pr.owner_user_id = ${context.userId}`)[0]; if (!client && !professional) throw new Error("A conversa fica disponível depois de aceitares a proposta."); const senderRole = client ? "cliente" : "profissional"; const id = newId("msg"); await sql`insert into job_messages (id, job_id, user_id, sender_role, body) values (${id}, ${data.jobId}, ${context.userId}, ${senderRole}, ${data.body})`;
+  
+  // Send email notification to the other party
+  const job = await sql<{ title: string; user_id: string }>`select title, user_id from jobs where id = ${data.jobId} limit 1`;
+  if (job[0]) {
+    if (senderRole === "cliente") {
+      // Send to professional
+      const pro = await sql<{ owner_user_id: string }>`select pr.owner_user_id from jobs j join proposals p on p.id = j.accepted_proposal_id join professionals pr on pr.id = p.worker_id where j.id = ${data.jobId} limit 1`;
+      if (pro[0]?.owner_user_id) {
+        const proUser = await sql<{ email: string; name: string }>`select email, name from "user" where id = ${pro[0].owner_user_id} limit 1`;
+        if (proUser[0]) {
+          const prefs = await sql<{ notify_messages: boolean; notify_email: boolean }>`select notify_messages, notify_email from account_settings where user_id = ${pro[0].owner_user_id} limit 1`;
+          if (prefs[0]?.notify_messages && prefs[0]?.notify_email) {
+            const clientUser = await sql<{ name: string }>`select name from "user" where id = ${context.userId} limit 1`;
+            const messageUrl = `${process.env.BETTER_AUTH_URL ?? "https://biscate-ao-seven.vercel.app"}/pedidos/${data.jobId}`;
+            await sendNewMessageEmail({
+              recipientEmail: proUser[0].email,
+              recipientName: proUser[0].name || "",
+              senderName: clientUser[0]?.name || "Cliente",
+              senderRole: "cliente",
+              jobTitle: job[0].title,
+              messagePreview: data.body,
+              messageUrl,
+            });
+          }
+        }
+      }
+    } else {
+      // Send to client
+      const clientUser = await sql<{ email: string; name: string }>`select email, name from "user" where id = ${job[0].user_id} limit 1`;
+      if (clientUser[0]) {
+        const prefs = await sql<{ notify_messages: boolean; notify_email: boolean }>`select notify_messages, notify_email from account_settings where user_id = ${job[0].user_id} limit 1`;
+        if (prefs[0]?.notify_messages && prefs[0]?.notify_email) {
+          const pro = await sql<{ name: string }>`select name from professionals where owner_user_id = ${context.userId} limit 1`;
+          const messageUrl = `${process.env.BETTER_AUTH_URL ?? "https://biscate-ao-seven.vercel.app"}/pedidos/${data.jobId}`;
+          await sendNewMessageEmail({
+            recipientEmail: clientUser[0].email,
+            recipientName: clientUser[0].name || "",
+            senderName: pro[0]?.name || "Profissional",
+            senderRole: "profissional",
+            jobTitle: job[0].title,
+            messagePreview: data.body,
+            messageUrl,
+          });
+        }
+      }
+    }
+  }
+  
+  return { id, body: data.body, sender_role: senderRole, created_at: new Date().toISOString() }; });
 export const reviewCompletedJob = createServerFn({ method: "POST" }).validator(z.object({ jobId: z.string().min(1), rating: z.number().int().min(1).max(5), text: z.string().trim().min(8).max(500) })).middleware([authMiddleware]).handler(async ({ data, context }) => { const sql = await getSql(); const row = (await sql<{ worker_id: string }>`select p.worker_id from jobs j join proposals p on p.id = j.accepted_proposal_id where j.id = ${data.jobId} and j.user_id = ${context.userId} and j.status = 'concluido'`)[0]; if (!row) throw new Error("Conclui o pedido antes de avaliar."); await sql`insert into job_reviews (id, job_id, user_id, professional_id, rating, text) values (${newId("review")}, ${data.jobId}, ${context.userId}, ${row.worker_id}, ${data.rating}, ${data.text}) on conflict (job_id) do update set rating = excluded.rating, text = excluded.text`; await sql`update professionals set rating = (select round(avg(rating)::numeric, 1) from job_reviews where professional_id = ${row.worker_id}), jobs_count = jobs_count + 1 where id = ${row.worker_id}`; return { ok: true }; });

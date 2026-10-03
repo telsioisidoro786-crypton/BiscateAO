@@ -4,7 +4,7 @@ import { Loader2, CheckCircle, AlertCircle, Mail } from "lucide-react";
 import { authClient } from "@/lib/auth/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { verifyEmail } from "@/lib/account-workflows";
+import { verifyEmail, sendWelcomeEmailAfterVerification } from "@/lib/account-workflows";
 
 export const Route = createFileRoute("/auth/confirm")({
   component: ConfirmEmail,
@@ -37,6 +37,18 @@ function ConfirmEmail() {
         
         setStatus("success");
         setMessage("Email verificado com sucesso! Bem-vindo ao BiscateAO.");
+        
+        // Send welcome email
+        if (emailParam) {
+          try {
+            const { data: session } = await authClient.getSession();
+            const userName = session?.user?.name || "";
+            await sendWelcomeEmailAfterVerification({ data: { email: emailParam, name: userName } });
+          } catch (welcomeError) {
+            console.warn('[Confirm] Welcome email failed:', welcomeError);
+            // Don't fail the verification if welcome email fails
+          }
+        }
       } catch (err) {
         setStatus("error");
         setMessage(err instanceof Error ? err.message : "Erro ao verificar email. O link pode ter expirado.");

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
+import { sendWelcomeEmail } from "@/lib/email/resend";
 
 const id = (prefix: string) => `${prefix}-${crypto.randomUUID()}`;
 
@@ -141,7 +142,16 @@ export const verifyEmail = createServerFn({ method: "POST" })
     });
     
     if (result instanceof Response) {
-      return result.ok ? { success: true } : { success: false, error: 'Invalid token' };
+      if (result.ok) {
+        // Get the user's email and name to send welcome email
+        try {
+          // We need to extract user info from the token or session
+          // For now, we'll just return success - the welcome email could be sent
+          // via a separate mechanism or we'd need to get user info from Better Auth
+        } catch {}
+        return { success: true };
+      }
+      return { success: false, error: 'Invalid token' };
     }
     
     if (result && typeof result === 'object' && 'ok' in result) {
@@ -149,4 +159,20 @@ export const verifyEmail = createServerFn({ method: "POST" })
     }
     
     return { success: false, error: 'Invalid token' };
+  });
+
+// Send welcome email after verification
+export const sendWelcomeEmailAfterVerification = createServerFn({ method: "POST" })
+  .validator(z.object({ email: z.string().email(), name: z.string().optional() }))
+  .handler(async ({ data }) => {
+    try {
+      await sendWelcomeEmail({
+        email: data.email,
+        name: data.name || "",
+      });
+      return { success: true };
+    } catch (error: any) {
+      console.error('[WelcomeEmail] Failed:', error);
+      return { success: false, error: error.message };
+    }
   });
