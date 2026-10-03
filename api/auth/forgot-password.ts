@@ -1,4 +1,4 @@
-import { auth } from "../../../src/lib/auth/server.js";
+import { auth } from "@lib/auth/server";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
