@@ -24,6 +24,7 @@ import { Route as PedidosIdRouteImport } from './routes/pedidos.$id'
 import { Route as ProfissionaisIdRouteImport } from './routes/profissionais.$id'
 import { Route as ProfissionalCadastrarRouteImport } from './routes/profissional.cadastrar'
 import { Route as ProfissionalPedidosRouteImport } from './routes/profissional.pedidos'
+import { Route as ApiCronReminder24hRouteImport } from './routes/api/cron/reminder-24h'
 import { Route as ApiPushSubscribeRouteImport } from './routes/api/push/subscribe'
 import { Route as ApiPushUnsubscribeRouteImport } from './routes/api/push/unsubscribe'
 import { Route as ApiPushVapidStatusRouteImport } from './routes/api/push/vapid-status'
@@ -106,6 +107,11 @@ const ProfissionalPedidosRoute = ProfissionalPedidosRouteImport.update({
   path: '/profissional/pedidos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCronReminder24hRoute = ApiCronReminder24hRouteImport.update({
+  id: '/api/cron/reminder-24h',
+  path: '/api/cron/reminder-24h',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPushSubscribeRoute = ApiPushSubscribeRouteImport.update({
   id: '/api/push/subscribe',
   path: '/api/push/subscribe',
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/profissional/pedidos': typeof ProfissionalPedidosRoute
   '/oficios/': typeof OficiosIndexRoute
   '/pedidos/': typeof PedidosIndexRoute
+  '/api/cron/reminder-24h': typeof ApiCronReminder24hRoute
   '/api/push/subscribe': typeof ApiPushSubscribeRoute
   '/api/push/unsubscribe': typeof ApiPushUnsubscribeRoute
   '/api/push/vapid-status': typeof ApiPushVapidStatusRoute
@@ -176,6 +183,7 @@ export interface FileRoutesByTo {
   '/profissional/pedidos': typeof ProfissionalPedidosRoute
   '/oficios': typeof OficiosIndexRoute
   '/pedidos': typeof PedidosIndexRoute
+  '/api/cron/reminder-24h': typeof ApiCronReminder24hRoute
   '/api/push/subscribe': typeof ApiPushSubscribeRoute
   '/api/push/unsubscribe': typeof ApiPushUnsubscribeRoute
   '/api/push/vapid-status': typeof ApiPushVapidStatusRoute
@@ -200,6 +208,7 @@ export interface FileRoutesById {
   '/profissional/pedidos': typeof ProfissionalPedidosRoute
   '/oficios/': typeof OficiosIndexRoute
   '/pedidos/': typeof PedidosIndexRoute
+  '/api/cron/reminder-24h': typeof ApiCronReminder24hRoute
   '/api/push/subscribe': typeof ApiPushSubscribeRoute
   '/api/push/unsubscribe': typeof ApiPushUnsubscribeRoute
   '/api/push/vapid-status': typeof ApiPushVapidStatusRoute
@@ -225,6 +234,7 @@ export interface FileRouteTypes {
     | '/profissional/pedidos'
     | '/oficios/'
     | '/pedidos/'
+    | '/api/cron/reminder-24h'
     | '/api/push/subscribe'
     | '/api/push/unsubscribe'
     | '/api/push/vapid-status'
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
     | '/profissional/pedidos'
     | '/oficios'
     | '/pedidos'
+    | '/api/cron/reminder-24h'
     | '/api/push/subscribe'
     | '/api/push/unsubscribe'
     | '/api/push/vapid-status'
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/profissional/pedidos'
     | '/oficios/'
     | '/pedidos/'
+    | '/api/cron/reminder-24h'
     | '/api/push/subscribe'
     | '/api/push/unsubscribe'
     | '/api/push/vapid-status'
@@ -295,6 +307,7 @@ export interface RootRouteChildren {
   ProfissionalPedidosRoute: typeof ProfissionalPedidosRoute
   OficiosIndexRoute: typeof OficiosIndexRoute
   PedidosIndexRoute: typeof PedidosIndexRoute
+  ApiCronReminder24hRoute: typeof ApiCronReminder24hRoute
   ApiPushSubscribeRoute: typeof ApiPushSubscribeRoute
   ApiPushUnsubscribeRoute: typeof ApiPushUnsubscribeRoute
   ApiPushVapidStatusRoute: typeof ApiPushVapidStatusRoute
@@ -410,6 +423,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfissionalPedidosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/cron/reminder-24h': {
+      id: '/api/cron/reminder-24h'
+      path: '/api/cron/reminder-24h'
+      fullPath: '/api/cron/reminder-24h'
+      preLoaderRoute: typeof ApiCronReminder24hRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/push/subscribe': {
       id: '/api/push/subscribe'
       path: '/api/push/subscribe'
@@ -471,6 +491,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfissionalPedidosRoute: ProfissionalPedidosRoute,
   OficiosIndexRoute: OficiosIndexRoute,
   PedidosIndexRoute: PedidosIndexRoute,
+  ApiCronReminder24hRoute: ApiCronReminder24hRoute,
   ApiPushSubscribeRoute: ApiPushSubscribeRoute,
   ApiPushUnsubscribeRoute: ApiPushUnsubscribeRoute,
   ApiPushVapidStatusRoute: ApiPushVapidStatusRoute,
