@@ -1,7 +1,20 @@
+/**
+ * @typedef {Object} BetterAuth
+ * @property {Function} handler
+ * @property {Object} api
+ * @property {Function} api.signIn.social
+ * @property {Function} api.signUp.email
+ * @property {Function} api.signIn.email
+ * @property {Function} api.signOut
+ * @property {Function} api.resetPassword
+ * @property {Function} api.sendPasswordResetEmail
+ * @property {Function} api.getSession
+ */
+
 import { betterAuth } from "better-auth";
 import { Pool } from "pg";
 
-const env = (key: string): string | undefined => {
+const env = (key) => {
   const value = process.env[key]?.trim();
   return value ? value : undefined;
 };
@@ -12,17 +25,17 @@ const database = databaseUrl
   ? new Pool({ connectionString: databaseUrl })
   : null;
 
-const socialProviders: Record<string, { clientId: string; clientSecret: string }> = {};
+const socialProviders = {};
 if (env("GOOGLE_CLIENT_ID") && env("GOOGLE_CLIENT_SECRET")) {
   socialProviders.google = {
-    clientId: env("GOOGLE_CLIENT_ID")!,
-    clientSecret: env("GOOGLE_CLIENT_SECRET")!,
+    clientId: env("GOOGLE_CLIENT_ID"),
+    clientSecret: env("GOOGLE_CLIENT_SECRET"),
   };
 }
 if (env("GITHUB_CLIENT_ID") && env("GITHUB_CLIENT_SECRET")) {
   socialProviders.github = {
-    clientId: env("GITHUB_CLIENT_ID")!,
-    clientSecret: env("GITHUB_CLIENT_SECRET")!,
+    clientId: env("GITHUB_CLIENT_ID"),
+    clientSecret: env("GITHUB_CLIENT_SECRET"),
   };
 }
 
@@ -31,7 +44,7 @@ const emailAndPasswordEnabled = true;
 const auth = betterAuth({
   baseURL: "https://biscate-ao-seven.vercel.app",
   secret: env("BETTER_AUTH_SECRET") ?? "dev-secret-change-in-production",
-  database: database ?? { type: "postgres" as const },
+  database: database ?? { type: "postgres" },
   trustedOrigins: [
     "http://localhost:8080",
     "http://127.0.0.1:8080",
@@ -43,7 +56,7 @@ const auth = betterAuth({
 
   emailAndPassword: {
     enabled: emailAndPasswordEnabled,
-    sendVerificationEmail: async ({ user, url, token }: { user: { email: string; name?: string | null }; url: string; token: string }) => {
+    sendVerificationEmail: async ({ user, url, token }) => {
       const verifyUrl = `https://biscate-ao-seven.vercel.app/auth/confirm?token=${token}&type=signup&email=${encodeURIComponent(user.email)}`;
       
       try {
@@ -55,7 +68,7 @@ const auth = betterAuth({
         throw error;
       }
     },
-    sendResetPasswordEmail: async ({ user, url, token }: { user: { email: string; name?: string | null }; url: string; token: string }) => {
+    sendResetPasswordEmail: async ({ user, url, token }) => {
       const resetUrl = `https://biscate-ao-seven.vercel.app/reset-password?token=${token}&email=${encodeURIComponent(user.email)}`;
       
       try {

@@ -3,9 +3,9 @@ import { Resend } from "resend";
 const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
 const FROM_EMAIL = "BiscateAO <noreply@biscateao.app>";
 
-let resend: Resend | null = null;
+let resend = null;
 
-function getResend(): Resend {
+function getResend() {
   if (!resend) {
     if (!process.env.RESEND_API_KEY) {
       throw new Error("RESEND_API_KEY não configurada");
@@ -15,14 +15,15 @@ function getResend(): Resend {
   return resend;
 }
 
-interface EmailPayload {
-  to: string;
-  subject: string;
-  html: string;
-  text?: string;
-}
-
-export async function sendEmail(payload: EmailPayload): Promise<{ success: boolean; error?: string; id?: string }> {
+/**
+ * @param {Object} payload
+ * @param {string} payload.to
+ * @param {string} payload.subject
+ * @param {string} payload.html
+ * @param {string} [payload.text]
+ * @returns {Promise<{success: boolean, error?: string, id?: string}>}
+ */
+export async function sendEmail(payload) {
   try {
     const resend = getResend();
     const result = await resend.emails.send({
@@ -33,13 +34,19 @@ export async function sendEmail(payload: EmailPayload): Promise<{ success: boole
       text: payload.text,
     });
     return { success: true, id: result.data?.id };
-  } catch (error: any) {
+  } catch (error) {
     console.error("[Resend] Send failed:", error);
     return { success: false, error: error.message };
   }
 }
 
-export async function sendVerificationEmail(email: string, name: string, token: string): Promise<{ success: boolean; error?: string }> {
+/**
+ * @param {string} email
+ * @param {string} name
+ * @param {string} token
+ * @returns {Promise<{success: boolean, error?: string}>}
+ */
+export async function sendVerificationEmail(email, name, token) {
   const verifyUrl = `https://biscate-ao-seven.vercel.app/auth/confirm?token=${token}&type=signup&email=${encodeURIComponent(email)}`;
   
   return sendEmail({
@@ -62,7 +69,13 @@ export async function sendVerificationEmail(email: string, name: string, token: 
   });
 }
 
-export async function sendResetPasswordEmail(email: string, name: string, token: string): Promise<{ success: boolean; error?: string }> {
+/**
+ * @param {string} email
+ * @param {string} name
+ * @param {string} token
+ * @returns {Promise<{success: boolean, error?: string}>}
+ */
+export async function sendResetPasswordEmail(email, name, token) {
   const resetUrl = `https://biscate-ao-seven.vercel.app/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
   
   return sendEmail({
@@ -86,7 +99,13 @@ export async function sendResetPasswordEmail(email: string, name: string, token:
   });
 }
 
-export async function sendBulkEmails(emails: string[], subject: string, html: string): Promise<{ sent: number; failed: number }> {
+/**
+ * @param {string[]} emails
+ * @param {string} subject
+ * @param {string} html
+ * @returns {Promise<{sent: number, failed: number}>}
+ */
+export async function sendBulkEmails(emails, subject, html) {
   let sent = 0;
   let failed = 0;
   
