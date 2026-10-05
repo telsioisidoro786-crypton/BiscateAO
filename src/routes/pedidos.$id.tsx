@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { WorkerAvatar } from "@/components/worker-avatar";
+import { ProposalChatDialog } from "@/components/proposal-chat-dialog";
 
 export const Route = createFileRoute("/pedidos/$id")({ loader: ({ params }) => getParticipantJobOptional({ data: { id: params.id } }), component: Pedido });
 const stateLabel = { aberto: "Aberto", aceite: "Profissional escolhido", concluido: "Concluído", cancelado: "Cancelado" } as const;
@@ -25,9 +26,55 @@ function Pedido() {
   async function saveEdit(event: FormEvent) { event.preventDefault(); setBusy(true); try { await updateMyJob({ data: { jobId: job.id, description, budgetMax: budget ? Number(budget) : null, urgency: job.urgency as "hoje" | "amanha" | "semana" | "flexivel" } }); setEditing(false); toast.success("Pedido atualizado."); await refresh(); } catch (error) { toast.error(error instanceof Error ? error.message : "Não foi possível editar."); } finally { setBusy(false); } }
   const cat = getCategory(job.category); const whatsappMessage = accepted ? encodeURIComponent(`Olá ${accepted.professional_name ?? ""}, aceitei o teu orçamento de ${formatKz(accepted.amount)} para “${job.title}” no BiscateAO. Podemos combinar o serviço?`) : "";
   return <div className="space-y-5"><header><p className="text-xs font-medium uppercase tracking-wide text-muted">{cat?.name} · {job.neighborhood} · {urgencyLabel(job.urgency)}</p><h1 className="mt-1 font-display text-2xl font-semibold">{job.title}</h1>{editing ? <form onSubmit={saveEdit} className="mt-3 space-y-2"><Textarea required minLength={8} value={description} onChange={(e) => setDescription(e.target.value)} /><Input inputMode="numeric" value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="Orçamento máximo (opcional)" /><div className="flex gap-2"><Button type="submit" size="sm" disabled={busy}>Guardar alterações</Button><Button type="button" variant="outline" size="sm" onClick={() => setEditing(false)}>Cancelar</Button></div></form> : <><p className="mt-2 text-sm text-ink">{job.description}</p><p className="mt-2 text-xs text-faint">{relativeTime(job.created_at)}</p></>}</header><div className="flex flex-wrap items-center gap-2"><Badge variant={job.status === "concluido" ? "good" : "outline"}>{stateLabel[job.status]}</Badge>{job.status === "aberto" && clientView ? <><Button variant="outline" size="sm" disabled={busy} onClick={() => setEditing(true)}><Pencil className="size-4" />Editar</Button><Button variant="outline" size="sm" disabled={busy} onClick={() => changeStatus("cancelado")}><X className="size-4" />Cancelar</Button></> : null}{job.status === "aceite" && clientView ? <Button size="sm" disabled={busy} onClick={() => changeStatus("concluido")}><CheckCircle2 className="size-4" />Marcar concluído</Button> : null}</div>
-    {job.status === "aberto" && clientView ? <section className="space-y-3"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-display text-lg font-semibold">Comparar propostas ({proposals.length})</h2><div className="flex flex-wrap gap-2"><select value={order} onChange={(e) => setOrder(e.target.value as typeof order)} className="h-9 rounded-md border border-border bg-surface px-2 text-sm"><option value="price">Menor preço</option><option value="rating">Melhor avaliação</option><option value="availability">Disponibilidade</option></select><Button type="button" size="sm" variant={availableOnly ? "default" : "outline"} onClick={() => setAvailableOnly(!availableOnly)}><Clock3 className="size-4" />Livre hoje</Button></div></div>{visible.length ? visible.map((p) => <ProposalCard key={p.id} proposal={p} busy={busy} onAccept={() => accept(p.id)} />) : <p className="rounded-xl bg-surface p-4 text-sm text-muted">Nenhuma proposta com este filtro.</p>}</section> : null}
+    {job.status === "aberto" && clientView ? <section className="space-y-3"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-display text-lg font-semibold">Comparar propostas ({proposals.length})</h2><div className="flex flex-wrap gap-2"><select value={order} onChange={(e) => setOrder(e.target.value as typeof order)} className="h-9 rounded-md border border-border bg-surface px-2 text-sm"><option value="price">Menor preço</option><option value="rating">Melhor avaliação</option><option value="availability">Disponibilidade</option></select><Button type="button" size="sm" variant={availableOnly ? "default" : "outline"} onClick={() => setAvailableOnly(!availableOnly)}><Clock3 className="size-4" />Livre hoje</Button></div></div>{visible.length ? visible.map((p) => <ProposalCard key={p.id} proposal={p} busy={busy} onAccept={() => accept(p.id)} jobTitle={job.title} jobId={job.id} />) : <p className="rounded-xl bg-surface p-4 text-sm text-muted">Nenhuma proposta com este filtro.</p>}</section> : null}
     {job.status === "aberto" && !clientView ? <section className="rounded-2xl bg-surface p-5 shadow-[var(--shadow-card)]"><h2 className="font-display text-lg font-semibold">O teu orçamento foi enviado</h2><p className="mt-2 text-sm text-muted">O cliente está a comparar propostas. O contacto e a conversa serão libertados apenas se escolher a tua proposta.</p>{proposals[0] ? <p className="mt-3 font-semibold">{formatKz(proposals[0].amount)} · {proposals[0].eta}</p> : null}</section> : null}
     {accepted ? <section className="space-y-3 rounded-2xl bg-surface p-5 shadow-[var(--shadow-card)]"><div className="flex items-center gap-3"><WorkerAvatar id={accepted.worker_id} name={accepted.professional_name ?? "Profissional"} /><div><p className="font-semibold">{clientView ? accepted.professional_name : "Proposta aceite"}</p><p className="text-sm text-muted">{formatKz(accepted.amount)} · {accepted.eta}</p></div></div>{canChat ? <><div className="space-y-2 rounded-xl bg-sunken p-3">{messages.length ? messages.map((m) => <div key={m.id} className={m.sender_role === viewerRole ? "ml-8 rounded-lg bg-primary px-3 py-2 text-sm text-primary-fg" : "mr-8 rounded-lg bg-surface px-3 py-2 text-sm shadow-sm"}>{m.body}</div>) : <p className="text-sm text-muted">A proposta foi aceite. Combina os detalhes do serviço por aqui.</p>}</div>{job.status === "aceite" ? <form onSubmit={send} className="flex gap-2"><Input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Escreve uma mensagem" /><Button type="submit" size="icon"><Send className="size-4" /></Button></form> : null}</> : null}{clientView && accepted.professional_whatsapp && (job.status === "aceite" || job.status === "concluido") ? <Button asChild variant="outline" className="w-full"><a href={`https://wa.me/${accepted.professional_whatsapp}?text=${whatsappMessage}`} target="_blank" rel="noreferrer"><MessageCircle className="size-4" />Continuar no WhatsApp</a></Button> : null}</section> : null}
     {job.status === "concluido" && clientView && accepted ? <form onSubmit={submitReview} className="space-y-3 rounded-2xl bg-surface p-5 shadow-[var(--shadow-card)]"><h2 className="font-display text-lg font-semibold">Avaliar serviço</h2><div className="flex gap-1">{[1, 2, 3, 4, 5].map((n) => <button key={n} type="button" aria-label={`${n} estrelas`} onClick={() => setRating(n)} className={n <= rating ? "text-primary" : "text-faint"}><Star className="size-5 fill-current" /></button>)}</div><Textarea required minLength={8} value={review} onChange={(e) => setReview(e.target.value)} placeholder="Conta como foi o serviço." /><Button type="submit">Guardar avaliação</Button></form> : null}</div>;
 }
-function ProposalCard({ proposal, busy, onAccept }: { proposal: { worker_id: string; amount: number; eta: string; message: string; professional_name?: string; professional_rating?: number; professional_available_today?: boolean; professional_neighborhood?: string }; busy: boolean; onAccept: () => void }) { return <article className="rounded-2xl bg-surface p-4 shadow-[var(--shadow-card)]"><div className="flex gap-3"><WorkerAvatar id={proposal.worker_id} name={proposal.professional_name ?? "Profissional"} /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center justify-between gap-2"><p className="font-semibold">{proposal.professional_name ?? "Profissional"}</p><p className="font-display text-lg font-semibold text-primary">{formatKz(proposal.amount)}</p></div><p className="mt-1 text-sm text-muted">{proposal.professional_rating ? `${proposal.professional_rating.toFixed(1)} ★` : "Novo profissional"} · {proposal.professional_neighborhood}{proposal.professional_available_today ? " · Livre hoje" : ""}</p><p className="mt-2 text-sm">{proposal.message}</p><p className="mt-2 text-sm font-medium">Prazo: {proposal.eta}</p><Button className="mt-3 w-full" disabled={busy} onClick={onAccept}>Aceitar orçamento</Button></div></div></article>; }
+function ProposalCard({ proposal, busy, onAccept, jobTitle, jobId }: { proposal: { worker_id: string; amount: number; eta: string; message: string; professional_name?: string; professional_rating?: number; professional_available_today?: boolean; professional_neighborhood?: string }; busy: boolean; onAccept: () => void; jobTitle: string; jobId: string }) {
+  return (
+    <article className="rounded-2xl bg-surface p-4 shadow-[var(--shadow-card)]">
+      <ProposalChatDialog
+        proposalId={proposal.worker_id}
+        proposal={{
+          id: proposal.worker_id,
+          amount: proposal.amount,
+          eta: proposal.eta,
+          message: proposal.message,
+          professional_name: proposal.professional_name,
+          professional_rating: proposal.professional_rating,
+          professional_available_today: proposal.professional_available_today,
+          professional_neighborhood: proposal.professional_neighborhood,
+          jobTitle,
+          jobId,
+        }}
+        viewerRole="cliente"
+        onAccept={onAccept}
+      >
+        <article className="rounded-2xl bg-surface p-4 shadow-[var(--shadow-card)]">
+          <div className="flex gap-3">
+            <WorkerAvatar id={proposal.worker_id} name={proposal.professional_name ?? "Profissional"} />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="font-semibold">{proposal.professional_name ?? "Profissional"}</p>
+                <p className="font-display text-lg font-semibold text-primary">{formatKz(proposal.amount)}</p>
+              </div>
+              <p className="mt-1 text-sm text-muted">
+                {proposal.professional_rating ? `${proposal.professional_rating.toFixed(1)} ★` : "Novo profissional"} ·
+                {proposal.professional_neighborhood}
+                {proposal.professional_available_today ? " · Livre hoje" : ""}
+              </p>
+              <p className="mt-2 text-sm">{proposal.message}</p>
+              <p className="mt-2 text-sm font-medium">Prazo: {proposal.eta}</p>
+              <div className="mt-3 flex gap-2">
+                <Button className="flex-1" disabled={busy} onClick={onAccept}>
+                  Aceitar orçamento
+                </Button>
+              </div>
+            </div>
+          </div>
+        </article>
+      </ProposalChatDialog>
+    </article>
+  );
+}

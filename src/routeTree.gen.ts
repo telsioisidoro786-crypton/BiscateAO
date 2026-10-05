@@ -29,6 +29,7 @@ import { Route as ApiAuthRest_newRouteImport } from './routes/api/auth/$rest_new
 import { Route as ApiAuthGetSessionRouteImport } from './routes/api/auth/get-session'
 import { Route as ApiAuthProvidersRouteImport } from './routes/api/auth/providers'
 import { Route as ApiAuthSignOutRouteImport } from './routes/api/auth/sign-out'
+import { Route as ApiCronReminder24hPushRouteImport } from './routes/api/cron/reminder-24h-push'
 import { Route as ApiDebugAuthRouteImport } from './routes/api/debug/auth'
 import { Route as ApiDebugEnvRouteImport } from './routes/api/debug/env'
 import { Route as ApiPushSubscribeRouteImport } from './routes/api/push/subscribe'
@@ -142,6 +143,11 @@ const ApiAuthSignOutRoute = ApiAuthSignOutRouteImport.update({
   path: '/api/auth/sign-out',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCronReminder24hPushRoute = ApiCronReminder24hPushRouteImport.update({
+  id: '/api/cron/reminder-24h-push',
+  path: '/api/cron/reminder-24h-push',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiDebugAuthRoute = ApiDebugAuthRouteImport.update({
   id: '/api/debug/auth',
   path: '/api/debug/auth',
@@ -224,6 +230,7 @@ export interface FileRoutesByFullPath {
   '/api/auth/get-session': typeof ApiAuthGetSessionRoute
   '/api/auth/providers': typeof ApiAuthProvidersRoute
   '/api/auth/sign-out': typeof ApiAuthSignOutRoute
+  '/api/cron/reminder-24h-push': typeof ApiCronReminder24hPushRoute
   '/api/debug/auth': typeof ApiDebugAuthRoute
   '/api/debug/env': typeof ApiDebugEnvRoute
   '/api/push/subscribe': typeof ApiPushSubscribeRoute
@@ -258,6 +265,7 @@ export interface FileRoutesByTo {
   '/api/auth/get-session': typeof ApiAuthGetSessionRoute
   '/api/auth/providers': typeof ApiAuthProvidersRoute
   '/api/auth/sign-out': typeof ApiAuthSignOutRoute
+  '/api/cron/reminder-24h-push': typeof ApiCronReminder24hPushRoute
   '/api/debug/auth': typeof ApiDebugAuthRoute
   '/api/debug/env': typeof ApiDebugEnvRoute
   '/api/push/subscribe': typeof ApiPushSubscribeRoute
@@ -293,6 +301,7 @@ export interface FileRoutesById {
   '/api/auth/get-session': typeof ApiAuthGetSessionRoute
   '/api/auth/providers': typeof ApiAuthProvidersRoute
   '/api/auth/sign-out': typeof ApiAuthSignOutRoute
+  '/api/cron/reminder-24h-push': typeof ApiCronReminder24hPushRoute
   '/api/debug/auth': typeof ApiDebugAuthRoute
   '/api/debug/env': typeof ApiDebugEnvRoute
   '/api/push/subscribe': typeof ApiPushSubscribeRoute
@@ -329,6 +338,7 @@ export interface FileRouteTypes {
     | '/api/auth/get-session'
     | '/api/auth/providers'
     | '/api/auth/sign-out'
+    | '/api/cron/reminder-24h-push'
     | '/api/debug/auth'
     | '/api/debug/env'
     | '/api/push/subscribe'
@@ -363,6 +373,7 @@ export interface FileRouteTypes {
     | '/api/auth/get-session'
     | '/api/auth/providers'
     | '/api/auth/sign-out'
+    | '/api/cron/reminder-24h-push'
     | '/api/debug/auth'
     | '/api/debug/env'
     | '/api/push/subscribe'
@@ -397,6 +408,7 @@ export interface FileRouteTypes {
     | '/api/auth/get-session'
     | '/api/auth/providers'
     | '/api/auth/sign-out'
+    | '/api/cron/reminder-24h-push'
     | '/api/debug/auth'
     | '/api/debug/env'
     | '/api/push/subscribe'
@@ -432,6 +444,7 @@ export interface RootRouteChildren {
   ApiAuthGetSessionRoute: typeof ApiAuthGetSessionRoute
   ApiAuthProvidersRoute: typeof ApiAuthProvidersRoute
   ApiAuthSignOutRoute: typeof ApiAuthSignOutRoute
+  ApiCronReminder24hPushRoute: typeof ApiCronReminder24hPushRoute
   ApiDebugAuthRoute: typeof ApiDebugAuthRoute
   ApiDebugEnvRoute: typeof ApiDebugEnvRoute
   ApiPushSubscribeRoute: typeof ApiPushSubscribeRoute
@@ -588,6 +601,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSignOutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/cron/reminder-24h-push': {
+      id: '/api/cron/reminder-24h-push'
+      path: '/api/cron/reminder-24h-push'
+      fullPath: '/api/cron/reminder-24h-push'
+      preLoaderRoute: typeof ApiCronReminder24hPushRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/debug/auth': {
       id: '/api/debug/auth'
       path: '/api/debug/auth'
@@ -696,6 +716,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthGetSessionRoute: ApiAuthGetSessionRoute,
   ApiAuthProvidersRoute: ApiAuthProvidersRoute,
   ApiAuthSignOutRoute: ApiAuthSignOutRoute,
+  ApiCronReminder24hPushRoute: ApiCronReminder24hPushRoute,
   ApiDebugAuthRoute: ApiDebugAuthRoute,
   ApiDebugEnvRoute: ApiDebugEnvRoute,
   ApiPushSubscribeRoute: ApiPushSubscribeRoute,

@@ -11,6 +11,7 @@ export type JobStatus = "aberto" | "aceite" | "concluido" | "cancelado";
 export type JobRow = { id: string; category: string; title: string; description: string; neighborhood: string; budget_min: number | null; budget_max: number | null; urgency: string; preferred_worker_id: string | null; created_at: string; status: JobStatus; accepted_proposal_id: string | null };
 export type MessageRow = { id: string; body: string; sender_role: "cliente" | "profissional"; created_at: string };
 export type ProposalRow = { id: string; job_id: string; worker_id: string; amount: number; message: string; eta: string; created_at: string; professional_name?: string; professional_rating?: number; professional_available_today?: boolean; professional_neighborhood?: string; professional_whatsapp?: string };
+export type ProposalMessageRow = { id: string; proposal_id: string; user_id: string; sender_role: "cliente" | "profissional"; body: string; read_at: string | null; created_at: string };
 type Professional = { id: string; category: string; name: string; rating: number; available_today: boolean; neighborhood: string; whatsapp: string };
 
 const jobInput = z.object({ category: z.string().min(2).max(40), title: z.string().max(80).optional(), description: z.string().min(8).max(400), neighborhood: z.string().min(2).max(40), budgetMin: z.number().int().min(0).max(5_000_000).optional(), budgetMax: z.number().int().min(0).max(5_000_000).optional(), urgency: z.enum(["hoje", "amanha", "semana", "flexivel"]), preferredWorkerId: z.string().max(80).optional() });
@@ -155,3 +156,112 @@ export const addJobMessage = createServerFn({ method: "POST" }).validator(z.obje
   
   return { id, body: data.body, sender_role: senderRole, created_at: new Date().toISOString() }; });
 export const reviewCompletedJob = createServerFn({ method: "POST" }).validator(z.object({ jobId: z.string().min(1), rating: z.number().int().min(1).max(5), text: z.string().trim().min(8).max(500) })).middleware([authMiddleware]).handler(async ({ data, context }) => { const sql = await getSql(); const row = (await sql<{ worker_id: string }>`select p.worker_id from jobs j join proposals p on p.id = j.accepted_proposal_id where j.id = ${data.jobId} and j.user_id = ${context.userId} and j.status = 'concluido'`)[0]; if (!row) throw new Error("Conclui o pedido antes de avaliar."); await sql`insert into job_reviews (id, job_id, user_id, professional_id, rating, text) values (${newId("review")}, ${data.jobId}, ${context.userId}, ${row.worker_id}, ${data.rating}, ${data.text}) on conflict (job_id) do update set rating = excluded.rating, text = excluded.text`; await sql`update professionals set rating = (select round(avg(rating)::numeric, 1) from job_reviews where professional_id = ${row.worker_id}), jobs_count = jobs_count + 1 where id = ${row.worker_id}`; return { ok: true }; });
+
+// ============================================
+// PROPOSAL MESSAGES (Pre-acceptance chat)
+// ============================================
+
+const proposalMessageInput = z.object({ proposalId: z.string().min(1), body: z.string().trim().min(1).max(500) });
+const proposalIdInput = z.object({ proposalId: z.string().min(1) });
+
+export const getProposalMessages = createServerFn({ method: "GET" }).validator(proposalIdInput).middleware([authMiddleware]).handler(async ({ data, context }) => {
+  const sql = await getSql();
+  
+  // Verify user has access to this proposal (client of job or professional who made proposal)
+  const proposal = await sql<{ id: string; job_id: string; worker_id: string }>`
+    select id, job_id, worker_id from proposals where id = ${data.proposalId} limit 1
+  `;
+  if (!proposal[0]) throw new Error("Proposta não encontrada.");
+  
+  const job = await sql<{ id: string; user_id: string }>`
+    select id, user_id from jobs where id = ${proposal[0].job_id} limit 1
+  `;
+  if (!job[0]) throw new Error("Pedido não encontrado.");
+  
+  const professional = await sql<{ owner_user_id: string }>`
+    select owner_user_id from professionals where id = ${proposal[0].worker_id} limit 1
+  `;
+  
+  const isClient = job[0].user_id === context.userId;
+  const isProfessional = professional[0]?.owner_user_id === context.userId;
+  
+  if (!isClient && !isProfessional) throw new Error("Não tens acesso a esta conversa.");
+  
+  const messages = await sql<ProposalMessageRow>`
+    select id, proposal_id, user_id, sender_role, body, read_at::text as read_at, created_at::text as created_at
+    from proposal_messages where proposal_id = ${data.proposalId} order by created_at asc
+  `;
+  
+  // Mark as read
+  await sql`
+    update proposal_messages set read_at = now() 
+    where proposal_id = ${data.proposalId} and user_id != ${context.userId} and read_at is null
+  `;
+  
+  return { messages, viewerRole: isClient ? "cliente" : "profissional" };
+});
+
+export const sendProposalMessage = createServerFn({ method: "POST" }).validator(proposalMessageInput).middleware([authMiddleware]).handler(async ({ data, context }) => {
+  const sql = await getSql();
+  
+  // Verify access
+  const proposal = await sql<{ id: string; job_id: string; worker_id: string }>`
+    select id, job_id, worker_id from proposals where id = ${data.proposalId} limit 1
+  `;
+  if (!proposal[0]) throw new Error("Proposta não encontrada.");
+  
+  const job = await sql<{ id: string; user_id: string; title: string }>`
+    select id, user_id, title from jobs where id = ${proposal[0].job_id} limit 1
+  `;
+  if (!job[0]) throw new Error("Pedido não encontrado.");
+  
+  const professional = await sql<{ owner_user_id: string; name: string }>`
+    select owner_user_id, name from professionals where id = ${proposal[0].worker_id} limit 1
+  `;
+  
+  const isClient = job[0].user_id === context.userId;
+  const isProfessional = professional[0]?.owner_user_id === context.userId;
+  
+  if (!isClient && !isProfessional) throw new Error("Não tens acesso a esta conversa.");
+  
+  const senderRole = isClient ? "cliente" : "profissional";
+  const id = newId("pm");
+  await sql`
+    insert into proposal_messages (id, proposal_id, user_id, sender_role, body)
+    values (${id}, ${data.proposalId}, ${context.userId}, ${senderRole}, ${data.body})
+  `;
+  
+  // Send push notification to the other party
+  if (senderRole === "cliente") {
+    // Notify professional
+    if (professional[0]?.owner_user_id) {
+      const subscriptions = await sql<{ endpoint: string; subscription: any }>`
+        select endpoint, subscription from push_subscriptions where user_id = ${professional[0].owner_user_id}
+      `;
+      const prefs = await sql<{ notify_messages: boolean }>`
+        select notify_messages from account_settings where user_id = ${professional[0].owner_user_id} limit 1
+      `;
+      if (prefs[0]?.notify_messages) {
+        const clientUser = await sql<{ name: string }>`select name from "user" where id = ${context.userId} limit 1`;
+        const url = `${process.env.BETTER_AUTH_URL ?? "https://biscate-ao-seven.vercel.app"}/pedidos/${job[0].id}?proposal=${data.proposalId}`;
+        const payload = notificationTemplates.newMessage(`${clientUser[0]?.name || "Cliente"} (cliente)`, data.body, url);
+        await Promise.all(subscriptions.map(s => sendPushNotification(s.subscription, payload)));
+      }
+    }
+  } else {
+    // Notify client
+    const subscriptions = await sql<{ endpoint: string; subscription: any }>`
+      select endpoint, subscription from push_subscriptions where user_id = ${job[0].user_id}
+    `;
+    const prefs = await sql<{ notify_messages: boolean }>`
+      select notify_messages from account_settings where user_id = ${job[0].user_id} limit 1
+    `;
+    if (prefs[0]?.notify_messages) {
+      const url = `${process.env.BETTER_AUTH_URL ?? "https://biscate-ao-seven.vercel.app"}/pedidos/${job[0].id}?proposal=${data.proposalId}`;
+      const payload = notificationTemplates.newMessage(`${professional[0]?.name || "Profissional"} (profissional)`, data.body, url);
+      await Promise.all(subscriptions.map(s => sendPushNotification(s.subscription, payload)));
+    }
+  }
+  
+  return { id, body: data.body, sender_role: senderRole, created_at: new Date().toISOString() };
+});
