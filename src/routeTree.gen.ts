@@ -33,12 +33,14 @@ import { Route as ApiDebugAuthRouteImport } from './routes/api/debug/auth'
 import { Route as ApiDebugEnvRouteImport } from './routes/api/debug/env'
 import { Route as ApiPushSubscribeRouteImport } from './routes/api/push/subscribe'
 import { Route as ApiPushUnsubscribeRouteImport } from './routes/api/push/unsubscribe'
+import { Route as ApiPushVapidStatusRouteImport } from './routes/api/push/vapid-status'
 import { Route as ApiUploadAvatarRouteImport } from './routes/api/upload/avatar'
 import { Route as ApiUploadDeleteRouteImport } from './routes/api/upload/delete'
 import { Route as ApiUploadPortfolioRouteImport } from './routes/api/upload/portfolio'
 import { Route as ApiAuthCallbackGithubRouteImport } from './routes/api/auth/callback/github'
 import { Route as ApiAuthCallbackGoogleRouteImport } from './routes/api/auth/callback/google'
 import { Route as ApiAuthSignInOauth2RouteImport } from './routes/api/auth/sign-in/oauth2'
+import { Route as ApiAuthSignInSocialRouteImport } from './routes/api/auth/sign-in/social'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -160,6 +162,11 @@ const ApiPushUnsubscribeRoute = ApiPushUnsubscribeRouteImport.update({
   path: '/api/push/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPushVapidStatusRoute = ApiPushVapidStatusRouteImport.update({
+  id: '/api/push/vapid-status',
+  path: '/api/push/vapid-status',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiUploadAvatarRoute = ApiUploadAvatarRouteImport.update({
   id: '/api/upload/avatar',
   path: '/api/upload/avatar',
@@ -190,6 +197,11 @@ const ApiAuthSignInOauth2Route = ApiAuthSignInOauth2RouteImport.update({
   path: '/api/auth/sign-in/oauth2',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAuthSignInSocialRoute = ApiAuthSignInSocialRouteImport.update({
+  id: '/api/auth/sign-in/social',
+  path: '/api/auth/sign-in/social',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -216,12 +228,14 @@ export interface FileRoutesByFullPath {
   '/api/debug/env': typeof ApiDebugEnvRoute
   '/api/push/subscribe': typeof ApiPushSubscribeRoute
   '/api/push/unsubscribe': typeof ApiPushUnsubscribeRoute
+  '/api/push/vapid-status': typeof ApiPushVapidStatusRoute
   '/api/upload/avatar': typeof ApiUploadAvatarRoute
   '/api/upload/delete': typeof ApiUploadDeleteRoute
   '/api/upload/portfolio': typeof ApiUploadPortfolioRoute
   '/api/auth/callback/github': typeof ApiAuthCallbackGithubRoute
   '/api/auth/callback/google': typeof ApiAuthCallbackGoogleRoute
   '/api/auth/sign-in/oauth2': typeof ApiAuthSignInOauth2Route
+  '/api/auth/sign-in/social': typeof ApiAuthSignInSocialRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -248,12 +262,14 @@ export interface FileRoutesByTo {
   '/api/debug/env': typeof ApiDebugEnvRoute
   '/api/push/subscribe': typeof ApiPushSubscribeRoute
   '/api/push/unsubscribe': typeof ApiPushUnsubscribeRoute
+  '/api/push/vapid-status': typeof ApiPushVapidStatusRoute
   '/api/upload/avatar': typeof ApiUploadAvatarRoute
   '/api/upload/delete': typeof ApiUploadDeleteRoute
   '/api/upload/portfolio': typeof ApiUploadPortfolioRoute
   '/api/auth/callback/github': typeof ApiAuthCallbackGithubRoute
   '/api/auth/callback/google': typeof ApiAuthCallbackGoogleRoute
   '/api/auth/sign-in/oauth2': typeof ApiAuthSignInOauth2Route
+  '/api/auth/sign-in/social': typeof ApiAuthSignInSocialRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -281,12 +297,14 @@ export interface FileRoutesById {
   '/api/debug/env': typeof ApiDebugEnvRoute
   '/api/push/subscribe': typeof ApiPushSubscribeRoute
   '/api/push/unsubscribe': typeof ApiPushUnsubscribeRoute
+  '/api/push/vapid-status': typeof ApiPushVapidStatusRoute
   '/api/upload/avatar': typeof ApiUploadAvatarRoute
   '/api/upload/delete': typeof ApiUploadDeleteRoute
   '/api/upload/portfolio': typeof ApiUploadPortfolioRoute
   '/api/auth/callback/github': typeof ApiAuthCallbackGithubRoute
   '/api/auth/callback/google': typeof ApiAuthCallbackGoogleRoute
   '/api/auth/sign-in/oauth2': typeof ApiAuthSignInOauth2Route
+  '/api/auth/sign-in/social': typeof ApiAuthSignInSocialRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -315,12 +333,14 @@ export interface FileRouteTypes {
     | '/api/debug/env'
     | '/api/push/subscribe'
     | '/api/push/unsubscribe'
+    | '/api/push/vapid-status'
     | '/api/upload/avatar'
     | '/api/upload/delete'
     | '/api/upload/portfolio'
     | '/api/auth/callback/github'
     | '/api/auth/callback/google'
     | '/api/auth/sign-in/oauth2'
+    | '/api/auth/sign-in/social'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -347,12 +367,14 @@ export interface FileRouteTypes {
     | '/api/debug/env'
     | '/api/push/subscribe'
     | '/api/push/unsubscribe'
+    | '/api/push/vapid-status'
     | '/api/upload/avatar'
     | '/api/upload/delete'
     | '/api/upload/portfolio'
     | '/api/auth/callback/github'
     | '/api/auth/callback/google'
     | '/api/auth/sign-in/oauth2'
+    | '/api/auth/sign-in/social'
   id:
     | '__root__'
     | '/'
@@ -379,12 +401,14 @@ export interface FileRouteTypes {
     | '/api/debug/env'
     | '/api/push/subscribe'
     | '/api/push/unsubscribe'
+    | '/api/push/vapid-status'
     | '/api/upload/avatar'
     | '/api/upload/delete'
     | '/api/upload/portfolio'
     | '/api/auth/callback/github'
     | '/api/auth/callback/google'
     | '/api/auth/sign-in/oauth2'
+    | '/api/auth/sign-in/social'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -412,12 +436,14 @@ export interface RootRouteChildren {
   ApiDebugEnvRoute: typeof ApiDebugEnvRoute
   ApiPushSubscribeRoute: typeof ApiPushSubscribeRoute
   ApiPushUnsubscribeRoute: typeof ApiPushUnsubscribeRoute
+  ApiPushVapidStatusRoute: typeof ApiPushVapidStatusRoute
   ApiUploadAvatarRoute: typeof ApiUploadAvatarRoute
   ApiUploadDeleteRoute: typeof ApiUploadDeleteRoute
   ApiUploadPortfolioRoute: typeof ApiUploadPortfolioRoute
   ApiAuthCallbackGithubRoute: typeof ApiAuthCallbackGithubRoute
   ApiAuthCallbackGoogleRoute: typeof ApiAuthCallbackGoogleRoute
   ApiAuthSignInOauth2Route: typeof ApiAuthSignInOauth2Route
+  ApiAuthSignInSocialRoute: typeof ApiAuthSignInSocialRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -590,6 +616,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPushUnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/push/vapid-status': {
+      id: '/api/push/vapid-status'
+      path: '/api/push/vapid-status'
+      fullPath: '/api/push/vapid-status'
+      preLoaderRoute: typeof ApiPushVapidStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/upload/avatar': {
       id: '/api/upload/avatar'
       path: '/api/upload/avatar'
@@ -632,6 +665,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSignInOauth2RouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/auth/sign-in/social': {
+      id: '/api/auth/sign-in/social'
+      path: '/api/auth/sign-in/social'
+      fullPath: '/api/auth/sign-in/social'
+      preLoaderRoute: typeof ApiAuthSignInSocialRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -660,12 +700,14 @@ const rootRouteChildren: RootRouteChildren = {
   ApiDebugEnvRoute: ApiDebugEnvRoute,
   ApiPushSubscribeRoute: ApiPushSubscribeRoute,
   ApiPushUnsubscribeRoute: ApiPushUnsubscribeRoute,
+  ApiPushVapidStatusRoute: ApiPushVapidStatusRoute,
   ApiUploadAvatarRoute: ApiUploadAvatarRoute,
   ApiUploadDeleteRoute: ApiUploadDeleteRoute,
   ApiUploadPortfolioRoute: ApiUploadPortfolioRoute,
   ApiAuthCallbackGithubRoute: ApiAuthCallbackGithubRoute,
   ApiAuthCallbackGoogleRoute: ApiAuthCallbackGoogleRoute,
   ApiAuthSignInOauth2Route: ApiAuthSignInOauth2Route,
+  ApiAuthSignInSocialRoute: ApiAuthSignInSocialRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
