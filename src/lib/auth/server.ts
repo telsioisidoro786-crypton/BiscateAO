@@ -80,6 +80,16 @@ function buildAuthConfig() {
     return `${baseUrl}/auth/confirm?token=${token}&type=${type}&email=${encodeURIComponent(email)}`;
   };
 
+  // Fail fast if BETTER_AUTH_SECRET is not set in production
+  const authSecret = env("BETTER_AUTH_SECRET");
+  if (!authSecret) {
+    const isProduction = process.env.VERCEL_ENV === "production" || process.env.NODE_ENV === "production";
+    if (isProduction) {
+      throw new Error("BETTER_AUTH_SECRET must be set in production environment");
+    }
+    console.warn("[Auth] WARNING: BETTER_AUTH_SECRET not set, using development fallback");
+  }
+
   return betterAuth({
     baseURL: baseUrl,
     secret: env("BETTER_AUTH_SECRET") ?? "dev-secret-change-in-production",

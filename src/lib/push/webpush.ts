@@ -3,6 +3,15 @@ const VAPID_PUBLIC_KEY = process.env.VITE_VAPID_PUBLIC_KEY || '';
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || '';
 const VAPID_EMAIL = process.env.VAPID_EMAIL || 'mailto:contato@biscateao.app';
 
+// Fail fast if VAPID keys not set in production
+const isProduction = process.env.VERCEL_ENV === "production" || process.env.NODE_ENV === "production";
+if (isProduction && (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY)) {
+  throw new Error("VAPID keys (VITE_VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY) must be set in production");
+}
+if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+  console.warn('[webpush] VAPID keys not configured, push notifications will not work');
+}
+
 let webpushConfigured = false;
 let webpushModule: any = null;
 
